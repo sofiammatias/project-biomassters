@@ -5,13 +5,13 @@ with open("requirements.txt") as f:
     content = f.readlines()
 requirements = [x.strip() for x in content if "git+" not in x]
 
-setup(name='taxifare',
-      version="0.0.9",
-      description="TaxiFare Model (api_pred)",
-      license="MIT",
-      author="Le Wagon",
-      author_email="contact@lewagon.org",
-      url="https://github.com/lewagon/taxi-fare",
+setup(name='project-biomassters',
+      version="0.0.1",
+      description="Project BioMassters Model (api_pred)",
+      #license="MIT",
+      author="Le Wagon group",
+      author_email="sofia.m.matias@gmail.com",
+      url="https://github.com/sofiammatias/project-biomassters",
       install_requires=requirements,
       packages=find_packages(),
       test_suite="tests",
