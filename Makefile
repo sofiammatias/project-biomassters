@@ -1,7 +1,10 @@
 #################### PACKAGE ACTIONS ###################
 
+load_data_test:
+	python -c 'from biomassters.interface.main import load_data_test; load_data_test()'
+
 reinstall_package:
-	@pip uninstall -y taxifare || :
+	@pip uninstall -y biomassters || :
 	@pip install -e .
 
 run_preprocess:
