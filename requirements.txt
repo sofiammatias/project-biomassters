@@ -5,6 +5,7 @@ matplotlib
 numpy
 pandas
 nbresult
+tensorflow
 pygeohash
 pytest
 seaborn
