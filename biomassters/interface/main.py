@@ -5,45 +5,53 @@ import os
 from colorama import Fore, Style
 
 from biomassters.data_sources.aws import get_aws_chunk, features_per_month, features_mode
+from biomassters.data_sources.aws import features_not_downloaded
+
 #from taxifare.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
 #from taxifare.ml_logic.params import CHUNK_SIZE, DATASET_SIZE, VALIDATION_DATASET_SIZE
 #from taxifare.ml_logic.preprocessor import preprocess_features
 #from taxifare.ml_logic.utils import get_dataset_timestamp
 #from taxifare.ml_logic.registry import get_model_version
 
-#from taxifare.ml_logic.registry import load_model, save_model
+from biomassters.ml_logic.registry import load_model, save_model
 
 
-def load_data_test():
+def load_dataset():
 
 
     # Code to verify LOCAL_DATA_PATH folder existence and create in case it doesn't
     # LOAL_DATA_PATH is the path to download raw data files
-    data_path = os.getenv('LOCAL_DATA_PATH')
-    print (data_path)
+    raw_data_path = os.getenv('LOCAL_DATA_PATH')
 
-    if not os.path.exists(data_path):
-        os.makedirs (data_path)
-        print (Fore.BLUE + f'\nFolder {data_path} was created\n' + Style.RESET_ALL)
+    if not os.path.exists(raw_data_path):
+        os.makedirs (raw_data_path)
+        print (Fore.BLUE + f'\nFolder {raw_data_path} was created\n' + Style.RESET_ALL)
 
     # Loading remaining data from env variables
     # 'features_metadata'
     features = pd.read_csv(os.getenv('FEATURES'))
     # define usage mode: train or test
     mode = os.getenv('MODE')
-    print (mode)
     # set month to download files
     month = os.getenv('MONTH')
-    print (month)
+
+#    chip_id_num =
 
     # Filter 'features_metadata' with mode and month
     features_month = features_per_month (features, month)
     print (features_month.shape)
-    features_to_download = features_mode (features_month, mode)
-    print (features_to_download.shape)
+    featuresmode = features_mode (features_month, mode)
+    features_to_download = features_not_downloaded (featuresmode, mode)
+
 
     # Download files according to 'features_to_download' dataframe
-    get_aws_chunk(features_to_download, data_path)
+
+    letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+               'a', 'b', 'c', 'd', 'e', 'f']
+
+#    for chunk_num, letter in enumerate(first_letter):
+
+    get_aws_chunk(features_to_download, raw_data_path)
 
 
 

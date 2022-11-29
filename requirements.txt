@@ -1,4 +1,5 @@
 colorama
+streamlit
 ipdb
 ipykernel
 matplotlib
