@@ -24,10 +24,11 @@ features = pd.read_csv ('../project-biomassters/data/features_metadata.csv')
 col1, col2 = st.columns(2)
 
 with col1:
-    sat = st.selectbox(
-        "Select satellite imagery: ",
-        ("Both", "S1", "S2")
-        )
+    # CODE TO CONSIDER SATELLITE IMAGE CHOICE
+    #sat = st.selectbox(
+    #    "Select satellite imagery: ",
+    #    ("Both", "S1", "S2")
+    #    )
     mode = st.selectbox(
         "Select data for: ",
         ("Train", "Test")
@@ -43,42 +44,65 @@ with col1:
     chip_id_size = st.select_slider("Select the chip_id size (number of chip_id's per chunk):",
                                     options=['1', '5', '10', '20', '50', '100', '1000'])
 
+    if int(chip_id_size) <= 20:
+        chip_id_num_max = 10
+    else:
+        chip_id_num_max = 5
+
     chip_id_num = st.slider("Select the number of chip_id chunks:",
-                            1, 15, 1)
+                            1, chip_id_num_max, 1)
+
 
 
 os.environ['MODE'] = mode
 os.environ['MONTH'] = month
+
+
+if (month == 'All'): #and (sat == 'Both'):
+    filtered_features = features[(features.split == mode.lower())]
+else:
+# elif    sat == 'Both':
+    filtered_features = features[(features.month == month) &
+                                 (features.split == mode.lower())]
+# CODE TO CONSIDER SATELLITE IMAGE CHOICE
+#elif month == 'All':
+#    filtered_features = features[(features.sattelite == sat) &
+#                                 (features.split == mode.lower())]
+#else:
+#    filtered_features = features[(features.month == month) &
+#                                 (features.split == mode.lower()) &
+#                                 (features.satellite == sat)]
+
+
+    # USE A CHIP_ID TO START YOUR DOWNLOAD
+    #chip_id_start = st.selectbox("Select the chip_id where download should start:",
+    #                        filtered_features['chip_id'].sort_values())
+    #st.dataframe(filtered_features[['chip_id', 'file_downloaded']])
+
+
 os.environ['CHIP_ID_NUM'] = str(chip_id_num)
 os.environ['CHIP_ID_SIZE'] = chip_id_size
 
-
-
-if (month == 'All') and (sat == 'Both'):
-    filtered_features = features[(features.split == mode.lower())]
-elif sat == 'Both':
-    filtered_features = features[(features.month == month) &
-                                 (features.split == mode.lower())]
-elif month == 'All':
-    filtered_features = features[(features.sattelite == sat) &
-                                 (features.split == mode.lower())]
-else:
-    filtered_features = features[(features.month == month) &
-                                 (features.split == mode.lower()) &
-                                 (features.satellite == sat)]
-
+chip_id_list = filtered_features.chip_id.unique()[ : chip_id_num * int(chip_id_size)]
+chip_id_list = pd.Series(chip_id_list)
+file_list_df = filtered_features[filtered_features['chip_id'].isin(chip_id_list)]
 
 with col2:
-    st.dataframe(filtered_features[['chip_id', 'file_downloaded']])
+    st.markdown("""
+              List of files to download
+              """)
+    st.dataframe(file_list_df[['chip_id', 'filename']])
 
-datasize = round (filtered_features['size'].sum() / 10**6, ndigits = 3)
+download_size = file_list_df['size'].sum() / 10**6
 
-st.markdown (f""" ## Total number of files: {len(filtered_features)}""")
+download_info = f""" \n Files to download: {len(file_list_df)} \n
+Download size: {download_size} Mb \n
+Download time @1Mi/s: {round(download_size / 60, ndigits = 2)} mins"""
 
-st.markdown (f""" ## Total data to download: {datasize} Mb""")
+st.subheader("""Downloading Info""")
+st.info(download_info)
 
-
-# Calling API URL
+# Calling API URL - TO USE AN API
 
 # url = 'https://taxifare-wsbi2k6wha-ew.a.run.app/predict'
 
@@ -92,13 +116,25 @@ st.markdown (f""" ## Total data to download: {datasize} Mb""")
 # fare = requests.get(url_req)
 
 # final_fare = round (float(fare.text.split(':')[1].replace('}', '').strip()), ndigits=2)
+
+
+
+
 datasize = round (filtered_features['size'].sum() / 10**6, ndigits = 3)
 
-st.subheader("""
-             'features_metadata.csv'
+st.header("""
+          Features Metadata
+          """)
+
+st.subheader(f"""
+             'features_metadata.csv': {mode} data for month {month}
               """)
 
 st.dataframe(filtered_features)
+
+st.markdown (f""" ## Total number of files: {len(filtered_features)}""")
+st.markdown (f""" ## Total data to download: {datasize} Mb""")
+
 
 # 2. Let's build a dictionary containing the parameters for our API...
 # 3. Let's call our API using the `requests` package...

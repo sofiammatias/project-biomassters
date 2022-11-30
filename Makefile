@@ -1,7 +1,11 @@
 #################### PACKAGE ACTIONS ###################
 
-load_data_test:
-	python -c 'from biomassters.interface.main import load_data_test; load_data_test()'
+load_all_dataset:
+	python -c 'from biomassters.interface.main import load_all_dataset; load_all_dataset()'
+
+load_dataset:
+	python -c 'from biomassters.interface.main import load_dataset; load_dataset()'
+
 
 reinstall_package:
 	@pip uninstall -y biomassters || :

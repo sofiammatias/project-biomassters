@@ -13,7 +13,20 @@ from biomassters.data_sources.aws import features_not_downloaded
 #from taxifare.ml_logic.utils import get_dataset_timestamp
 #from taxifare.ml_logic.registry import get_model_version
 
-from biomassters.ml_logic.registry import load_model, save_model
+#from biomassters.ml_logic.registry import load_model, save_model
+
+def load_all_dataset():
+    raw_data_path = '~/.project-biomassters/raw_data/'
+    agbm_s3_path = 's3://drivendata-competition-biomassters-public-us/train_agbm/'
+    aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --no-sign-request'
+    os.system(aws_cli_agbm)
+    features_train_path='s3://drivendata-competition-biomassters-public-us/train_features/'
+    aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
+    os.system(aws_cli_features_train)
+    features_test_path='s3://drivendata-competition-biomassters-public-us/test_features/'
+    aws_cli_features_test = f'aws s3 cp {features_test_path} {raw_data_path} --recursive --no-sign-request'
+    os.system(aws_cli_features_test)
+
 
 
 def load_dataset():
@@ -22,6 +35,8 @@ def load_dataset():
     # Code to verify LOCAL_DATA_PATH folder existence and create in case it doesn't
     # LOAL_DATA_PATH is the path to download raw data files
     raw_data_path = os.getenv('LOCAL_DATA_PATH')
+    features_path = os.getenv('FEATURES')
+    agbm_s3_path = os.getenv('TRAIN_AGBM_S3_PATH')
 
     if not os.path.exists(raw_data_path):
         os.makedirs (raw_data_path)
@@ -34,24 +49,39 @@ def load_dataset():
     mode = os.getenv('MODE')
     # set month to download files
     month = os.getenv('MONTH')
+    # set 'chunks' of chip_id
+    chip_id_num = int(os.getenv('CHIP_ID_NUM'))
+    # set the number of chip_id's for each 'chunk': 'chunk' size
+    chip_id_size = int(os.getenv('CHIP_ID_SIZE'))
 
-#    chip_id_num =
 
     # Filter 'features_metadata' with mode and month
-    features_month = features_per_month (features, month)
-    print (features_month.shape)
-    featuresmode = features_mode (features_month, mode)
-    features_to_download = features_not_downloaded (featuresmode, mode)
+    #featuresmonth = features_per_month (features, month)
+    #print (featuresmonth.shape)
+    #featuresmode = features_mode (featuresmonth, mode)
+    #features_to_download = features_not_downloaded (featuresmode, mode)
+    features_to_download = features
 
 
     # Download files according to 'features_to_download' dataframe
+    if chip_id_size <= 20:
+        if chip_id_num > 10:
+            chip_id_num = 10
+        chip_id_list = features_to_download['chip_id'].unique()[: chip_id_num*chip_id_size]
+        for filter in chip_id_list:
+            print (filter)
+            get_aws_chunk(features_to_download, raw_data_path, features_path,
+                          agbm_s3_path, filter)
 
-    letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-               'a', 'b', 'c', 'd', 'e', 'f']
 
-#    for chunk_num, letter in enumerate(first_letter):
+    else:
+        pass
+        #if chip_id_num > 5:
+        #    chip_id_num = 5
+        #letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        #           'a', 'b', 'c', 'd', 'e', 'f']
 
-    get_aws_chunk(features_to_download, raw_data_path)
+        #get_aws_chunk(features_to_download, raw_data_path)
 
 
 
