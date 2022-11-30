@@ -19,9 +19,10 @@ def load_all_dataset():
     raw_data_path = '~/.project-biomassters/raw_data/'
     agbm_s3_path = 's3://drivendata-competition-biomassters-public-eu/train_agbm/'
     aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --no-sign-request'
-    os.system(aws_cli_agbm)
     features_train_path='s3://drivendata-competition-biomassters-public-eu/train_features/'
     aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
+    breakpoint()
+    os.system(aws_cli_agbm)
     os.system(aws_cli_features_train)
     features_test_path='s3://drivendata-competition-biomassters-public-eu/test_features/'
     aws_cli_features_test = f'aws s3 cp {features_test_path} {raw_data_path} --recursive --no-sign-request'
@@ -56,10 +57,11 @@ def load_dataset():
 
 
     # Filter 'features_metadata' with mode and month
-    #featuresmonth = features_per_month (features, month)
-    #print (featuresmonth.shape)
-    #featuresmode = features_mode (featuresmonth, mode)
-    #features_to_download = features_not_downloaded (featuresmode, mode)
+    breakpoint()
+    featuresmonth = features_per_month (features, month)
+    print (featuresmonth.shape)
+    featuresmode = features_mode (featuresmonth, mode)
+    features_to_download = features_not_downloaded (featuresmode, mode)
     features_to_download = features
 
 
@@ -76,12 +78,20 @@ def load_dataset():
 
     else:
         pass
-        #if chip_id_num > 5:
-        #    chip_id_num = 5
-        #letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        #           'a', 'b', 'c', 'd', 'e', 'f']
+        if chip_id_num > 5:
+            chip_id_num = 5
+        letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                   'a', 'b', 'c', 'd', 'e', 'f']
 
-        #get_aws_chunk(features_to_download, raw_data_path)
+        get_aws_chunk(features_to_download, raw_data_path)
+
+    datafiles = os.listdir(os.path.expanduser(raw_data_path))
+    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
+    final_features = features.loc[features['filename']
+                                  .isin(datafiles_no_agbm),
+                                  'file_downloaded'] = True
+    final_features.to_csv(os.path.expanduser(features_path), index = False)
+
 
 
 
