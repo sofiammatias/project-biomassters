@@ -11,7 +11,7 @@ def features_mode (features:pd.DataFrame, mode:str) -> pd.DataFrame:
     """
     Filter 'features_metadata' per using mode: train or test (uses 'split' column)
     """
-    return features[features.split == mode]
+    return features[features.split == mode.lower()]
 
 def features_not_downloaded (features:pd.DataFrame) -> pd.DataFrame:
     """

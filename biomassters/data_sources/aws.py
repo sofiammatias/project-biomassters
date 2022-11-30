@@ -6,13 +6,6 @@ import os
 import awscli
 
 
-
-    # First letter of each chip_id in 'features_metadata'
-#    first_letter = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-#                    'a', 'b', 'c', 'd', 'e', 'f']
-
-#    for chunk_num, letter in enumerate(first_letter):
-
 def get_aws_chunk(features: pd.DataFrame, raw_data_path:str,
                   agbm_s3_path:str, chip_id:np.ndarray, num_file:str):
     """
@@ -31,12 +24,12 @@ def get_aws_chunk(features: pd.DataFrame, raw_data_path:str,
             string_agbm += f' --include="{chip}_agbm.tif" '
             stringS1_features += f' --include="{chip}_S1_{num_file}.tif" '
             stringS2_features += f' --include="{chip}_S2_{num_file}.tif" '
-    elif type(chip_id) == str:
-        string_agbm = f' --include="{chip_id}_agbm.tif" '
-        stringS1_features = f' --include="{chip_id}_S1_{num_file}.tif" '
-        stringS2_features = f' --include="{chip_id}_S2_{num_file}.tif" '
+    elif type(chip_id) == np.ndarray and len(chip_id) == 1:
+        string_agbm = f' --include="{chip_id[0]}_agbm.tif" '
+        stringS1_features = f' --include="{chip_id[0]}_S1_{num_file}.tif" '
+        stringS2_features = f' --include="{chip_id[0]}_S2_{num_file}.tif" '
     else:
-        print (Fore.REd + f'\nError in downloading files. Aborting... \n' + Style.RESET_ALL)
+        print (Fore.RED + f'\nError in downloading files. Aborting... \n' + Style.RESET_ALL)
         return None
 
     aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --exclude="*" {string_agbm} --no-sign-request'

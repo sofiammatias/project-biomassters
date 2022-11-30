@@ -1,8 +1,7 @@
 import streamlit as st
 import os
-import datetime
-import requests
 import pandas as pd
+from biomassters.interface.main import load_dataset
 
 
 
@@ -88,7 +87,10 @@ download_size = file_list_df['size'].sum() / 10**6
 
 download_info = f""" \n Files to download: {len(file_list_df)} \n
 Download size: {download_size} Mb \n
-Download time @1Mi/s: {round(download_size / 60, ndigits = 2)} mins"""
+Download time @2Mb/s: {round(download_size / 120, ndigits = 2)} mins"""
+
+if st.button('Download files'):
+    os.system ("python -c 'from biomassters.interface.main import load_dataset; load_dataset()'")
 
 st.subheader("""Downloading Info""")
 st.info(download_info)

@@ -5,7 +5,8 @@ import os
 from colorama import Fore, Style
 
 from biomassters.data_sources.aws import get_aws_chunk
-from biomassters.data_sources.utils import features_not_downloaded, features_per_month, features_mode
+from biomassters.data_sources.utils import features_not_downloaded
+from biomassters.data_sources.utils import features_per_month, features_mode
 
 #from taxifare.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
 #from taxifare.ml_logic.params import CHUNK_SIZE, DATASET_SIZE, VALIDATION_DATASET_SIZE
@@ -15,9 +16,9 @@ from biomassters.data_sources.utils import features_not_downloaded, features_per
 
 #from biomassters.ml_logic.registry import load_model, save_model
 
-filters= {'January': '00', 'February': '01', 'March': '02', 'April': '03',
-          'May': '04', 'June': '05', 'July': '06', 'August': '07',
-          'September': '08', 'October': '09', 'November': '10', 'December': '11',
+filters= {'January': '04', 'February': '05', 'March': '06', 'April': '07',
+          'May': '08', 'June': '09', 'July': '10', 'August': '11',
+          'September': '00', 'October': '01', 'November': '02', 'December': '03',
           'All': '*', }
 
 chip_id_letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -26,10 +27,10 @@ chip_id_letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 combs = [val1+val2 for val1 in chip_id_letters for val2 in chip_id_letters]
 
 def load_all_dataset():
-    raw_data_path = '~/.project-biomassters/raw_data/'
-    agbm_s3_path = 's3://drivendata-competition-biomassters-public-eu/train_agbm/'
+    raw_data_path = os.getenv('LOCAL_DATA_PATH')
+    agbm_s3_path = os.getenv('TRAIN_AGBM_S3_PATH')
+    features_train_path = os.getenv('FEATURES_TRAIN_S3_PATH')
     aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --no-sign-request'
-    features_train_path='s3://drivendata-competition-biomassters-public-eu/train_features/'
     aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_agbm)
     os.system(aws_cli_features_train)
@@ -63,7 +64,6 @@ def load_dataset():
     chip_id_size = int(os.getenv('CHIP_ID_SIZE'))
 
     # Filter 'features_metadata' with mode and month
-
     featuresmonth = features_per_month (features, month)
     featuresmode = features_mode (featuresmonth, mode)
     features_to_download = features_not_downloaded (featuresmode)
@@ -88,6 +88,8 @@ def load_dataset():
         chip_id = chip_id_letters
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id, num_file)
+
+    # Updates 'features_metadata.csv' with newly downloaded data
 
     datafiles = os.listdir(os.path.expanduser(raw_data_path))
     datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
