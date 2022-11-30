@@ -17,13 +17,13 @@ from biomassters.data_sources.aws import features_not_downloaded
 
 def load_all_dataset():
     raw_data_path = '~/.project-biomassters/raw_data/'
-    agbm_s3_path = 's3://drivendata-competition-biomassters-public-us/train_agbm/'
+    agbm_s3_path = 's3://drivendata-competition-biomassters-public-eu/train_agbm/'
     aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_agbm)
-    features_train_path='s3://drivendata-competition-biomassters-public-us/train_features/'
+    features_train_path='s3://drivendata-competition-biomassters-public-eu/train_features/'
     aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_features_train)
-    features_test_path='s3://drivendata-competition-biomassters-public-us/test_features/'
+    features_test_path='s3://drivendata-competition-biomassters-public-eu/test_features/'
     aws_cli_features_test = f'aws s3 cp {features_test_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_features_test)
 
