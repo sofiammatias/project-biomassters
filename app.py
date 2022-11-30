@@ -44,14 +44,6 @@ with col1:
     chip_id_size = st.select_slider("Select the chip_id size (number of chip_id's per chunk):",
                                     options=['1', '5', '10', '20', '50', '100', '1000'])
 
-    if int(chip_id_size) <= 20:
-        chip_id_num_max = 10
-    else:
-        chip_id_num_max = 5
-
-    chip_id_num = st.slider("Select the number of chip_id chunks:",
-                            1, chip_id_num_max, 1)
-
 
 
 os.environ['MODE'] = mode
@@ -80,10 +72,9 @@ else:
     #st.dataframe(filtered_features[['chip_id', 'file_downloaded']])
 
 
-os.environ['CHIP_ID_NUM'] = str(chip_id_num)
 os.environ['CHIP_ID_SIZE'] = chip_id_size
 
-chip_id_list = filtered_features.chip_id.unique()[ : chip_id_num * int(chip_id_size)]
+chip_id_list = filtered_features.chip_id.unique()[ : int(chip_id_size)]
 chip_id_list = pd.Series(chip_id_list)
 file_list_df = filtered_features[filtered_features['chip_id'].isin(chip_id_list)]
 

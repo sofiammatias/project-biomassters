@@ -4,8 +4,8 @@ import os
 
 from colorama import Fore, Style
 
-from biomassters.data_sources.aws import get_aws_chunk, features_per_month, features_mode
-from biomassters.data_sources.aws import features_not_downloaded
+from biomassters.data_sources.aws import get_aws_chunk
+from biomassters.data_sources.utils import features_not_downloaded, features_per_month, features_mode
 
 #from taxifare.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
 #from taxifare.ml_logic.params import CHUNK_SIZE, DATASET_SIZE, VALIDATION_DATASET_SIZE
@@ -15,13 +15,22 @@ from biomassters.data_sources.aws import features_not_downloaded
 
 #from biomassters.ml_logic.registry import load_model, save_model
 
+filters= {'January': '00', 'February': '01', 'March': '02', 'April': '03',
+          'May': '04', 'June': '05', 'July': '06', 'August': '07',
+          'September': '08', 'October': '09', 'November': '10', 'December': '11',
+          'All': '*', }
+
+chip_id_letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                   'a', 'b', 'c', 'd', 'e', 'f']
+
+combs = [val1+val2 for val1 in chip_id_letters for val2 in chip_id_letters]
+
 def load_all_dataset():
     raw_data_path = '~/.project-biomassters/raw_data/'
     agbm_s3_path = 's3://drivendata-competition-biomassters-public-eu/train_agbm/'
     aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --no-sign-request'
     features_train_path='s3://drivendata-competition-biomassters-public-eu/train_features/'
     aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
-    breakpoint()
     os.system(aws_cli_agbm)
     os.system(aws_cli_features_train)
     features_test_path='s3://drivendata-competition-biomassters-public-eu/test_features/'
@@ -50,47 +59,43 @@ def load_dataset():
     mode = os.getenv('MODE')
     # set month to download files
     month = os.getenv('MONTH')
-    # set 'chunks' of chip_id
-    chip_id_num = int(os.getenv('CHIP_ID_NUM'))
     # set the number of chip_id's for each 'chunk': 'chunk' size
     chip_id_size = int(os.getenv('CHIP_ID_SIZE'))
 
-
     # Filter 'features_metadata' with mode and month
-    breakpoint()
+
     featuresmonth = features_per_month (features, month)
-    print (featuresmonth.shape)
     featuresmode = features_mode (featuresmonth, mode)
-    features_to_download = features_not_downloaded (featuresmode, mode)
-    features_to_download = features
+    features_to_download = features_not_downloaded (featuresmode)
+    num_file = filters[month]
+
+    datafiles = os.listdir(os.path.expanduser(raw_data_path))
+    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
+    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
+    features.to_csv(os.path.expanduser(features_path), index = False)
 
 
     # Download files according to 'features_to_download' dataframe
     if chip_id_size <= 20:
-        if chip_id_num > 10:
-            chip_id_num = 10
-        chip_id_list = features_to_download['chip_id'].unique()[: chip_id_num*chip_id_size]
-        for filter in chip_id_list:
-            print (filter)
-            get_aws_chunk(features_to_download, raw_data_path, features_path,
-                          agbm_s3_path, filter)
-
-
-    else:
-        pass
-        if chip_id_num > 5:
-            chip_id_num = 5
-        letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                   'a', 'b', 'c', 'd', 'e', 'f']
-
-        get_aws_chunk(features_to_download, raw_data_path)
+        chip_id_list = features_to_download['chip_id'].unique()[: chip_id_size]
+        get_aws_chunk(features_to_download, raw_data_path,
+                          agbm_s3_path, chip_id_list, num_file)
+    elif chip_id_size >= 100:
+        chip_id = combs
+        get_aws_chunk(features_to_download, raw_data_path,
+                          agbm_s3_path, chip_id, num_file)
+    elif chip_id_size >= 1000:
+        chip_id = chip_id_letters
+        get_aws_chunk(features_to_download, raw_data_path,
+                          agbm_s3_path, chip_id, num_file)
 
     datafiles = os.listdir(os.path.expanduser(raw_data_path))
     datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
-    final_features = features.loc[features['filename']
-                                  .isin(datafiles_no_agbm),
-                                  'file_downloaded'] = True
-    final_features.to_csv(os.path.expanduser(features_path), index = False)
+    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
+    features.to_csv(os.path.expanduser(features_path), index = False)
+    print (Fore.GREEN + f"\n'features_metadata.csv' updated with downloaded files\n" + Style.RESET_ALL)
+
+
 
 
 

@@ -1,5 +1,6 @@
 
 import pandas as pd
+import numpy as np
 from colorama import Fore, Style
 import os
 import awscli
@@ -13,21 +14,37 @@ import awscli
 #    for chunk_num, letter in enumerate(first_letter):
 
 def get_aws_chunk(features: pd.DataFrame, raw_data_path:str,
-                  features_path:str, agbm_s3_path:str, filter:str):
+                  agbm_s3_path:str, chip_id:np.ndarray, num_file:str):
     """
     return a chunk of dataset in AWS, filtered by the dataframe 'features' and
-    the filter string (chip_id characters to use)
-    datafiles downloaded are tracked by 'features_metadata.csv'
+    chip_id + num_file strings (chip_id characters to use and the numbering at the end)
     """
+
     os.chdir(os.path.expanduser(raw_data_path))
-    chunk_of_files = features[features.chip_id.str[:len(filter)] == filter]['s3path_eu']
     print (Fore.BLUE + f'\nDownloading files to {raw_data_path}...\n' + Style.RESET_ALL)
-    path = os.path.dirname(chunk_of_files.iloc[0])
-    end_name = os.path.basename(chunk_of_files.iloc[0]).split('_', 2)[2]
-    aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --exclude="*" --include="{filter}_agbm.tif" --no-sign-request'
+    features_path = os.path.dirname(features['s3path_eu'].iloc[0])
+    string_agbm = ''
+    stringS1_features = ''
+    stringS2_features = ''
+    if type(chip_id) == np.ndarray and len(chip_id) > 1:
+        for chip in chip_id:
+            string_agbm += f' --include="{chip}_agbm.tif" '
+            stringS1_features += f' --include="{chip}_S1_{num_file}.tif" '
+            stringS2_features += f' --include="{chip}_S2_{num_file}.tif" '
+    elif type(chip_id) == str:
+        string_agbm = f' --include="{chip_id}_agbm.tif" '
+        stringS1_features = f' --include="{chip_id}_S1_{num_file}.tif" '
+        stringS2_features = f' --include="{chip_id}_S2_{num_file}.tif" '
+    else:
+        print (Fore.REd + f'\nError in downloading files. Aborting... \n' + Style.RESET_ALL)
+        return None
+
+    aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --exclude="*" {string_agbm} --no-sign-request'
     os.system(aws_cli_agbm)
-    aws_cli_features = f'aws s3 cp {path} {raw_data_path} --recursive --exclude="*" --include="{filter}_S1_{end_name}" --include="{filter}_S2_{end_name}" --no-sign-request'
+    aws_cli_features = f'aws s3 cp {features_path} {raw_data_path} --recursive --exclude="*" {stringS1_features} {stringS2_features} --no-sign-request'
     os.system(aws_cli_features)
+    print (Fore.GREEN + f'\nFinished downloading files to {raw_data_path}.\n' + Style.RESET_ALL)
+    return None
 
 
 def delete_aws_chunk():
@@ -35,21 +52,3 @@ def delete_aws_chunk():
     delete a chunk of data from AWS after training model
     """
     pass
-
-def features_per_month (features:pd.DataFrame, month:str) -> pd.DataFrame:
-    """
-    Filter 'features_metadata' for one month and return the filtered dataframe
-    """
-    return features[features.month == month]
-
-def features_mode (features:pd.DataFrame, mode:str) -> pd.DataFrame:
-    """
-    Filter 'features_metadata' per using mode: train or test (uses 'split' column)
-    """
-    return features[features.split == mode]
-
-def features_not_downloaded (features:pd.DataFrame) -> pd.DataFrame:
-    """
-    Filter 'features_metadata' per using mode: train or test (uses 'split' column)
-    """
-    return features[features.file_downloaded == False]
