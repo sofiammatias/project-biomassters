@@ -95,11 +95,6 @@ def compile_model(model: Model, learning_rate: float) -> Model:
     model.compile(loss='mse',
                   optimizer="rmsprop",
                   metrics=rmse())
-<<<<<<< HEAD
-=======
-
->>>>>>> 672efd69935ac078b1bde25c9a1f66ba95e5c4ff
-
     print("\n✅ model compiled and fitted")
     return model
 
