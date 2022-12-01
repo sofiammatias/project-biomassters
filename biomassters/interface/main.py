@@ -49,9 +49,9 @@ def load_dataset():
     features_path = os.getenv('FEATURES')
     agbm_s3_path = os.getenv('TRAIN_AGBM_S3_PATH')
 
-    if not os.path.exists(raw_data_path):
-        os.makedirs (raw_data_path)
-        print (Fore.BLUE + f'\nFolder {raw_data_path} was created\n' + Style.RESET_ALL)
+    if not os.path.exists(os.path.expanduser(raw_data_path)):
+        os.makedirs(os.path.expanduser(raw_data_path))
+        print(Fore.BLUE + f'\nFolder {raw_data_path} was created\n' + Style.RESET_ALL)
 
     # Loading remaining data from env variables
     # 'features_metadata'
@@ -65,7 +65,7 @@ def load_dataset():
 
     datafiles = os.listdir(os.path.expanduser(raw_data_path))
     datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
-    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
+    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm)).astype(bool)
     features.to_csv(os.path.expanduser(features_path), index = False)
 
 
@@ -96,7 +96,6 @@ def load_dataset():
     features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
     features.to_csv(os.path.expanduser(features_path), index = False)
     print (Fore.GREEN + f"\n'features_metadata.csv' updated with downloaded files\n" + Style.RESET_ALL)
-
 
 
 
