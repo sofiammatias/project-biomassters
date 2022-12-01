@@ -5,8 +5,6 @@ import time
 print(Fore.BLUE + "\nLoading tensorflow..." + Style.RESET_ALL)
 start = time.perf_counter()
 
-from tensorflow.keras import Model, Sequential, layers, regularizers, optimizers
-from tensorflow.keras.callbacks import EarlyStopping
 
 end = time.perf_counter()
 print(f"\n✅ tensorflow loaded ({round(end - start, 2)} secs)")
@@ -14,44 +12,99 @@ print(f"\n✅ tensorflow loaded ({round(end - start, 2)} secs)")
 from typing import Tuple
 
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
+import tensorflow as tf
+from tf.keras.layers import Conv2D
+from tf.keras.layers import MaxPooling2D
+from tf.keras.layers import Dropout, Conv2DTranspose, concatenate
+from tf.keras import Input
+from tf.keras import layers, Model
+from tf.keras.metrics import RootMeanSquareError as rmse
 
 
-def initialize_model(X: np.ndarray) -> Model:
+def initialize_model(input_layer, start_neurons) -> Model:
     """
     Initialize the Neural Network with random weights
     """
-    print(Fore.BLUE + "\nInitialize model..." + Style.RESET_ALL)
+    print("Initialize model..." )
+    input_layer = Input((256, 256,4))
+    #output_layer = build_model(input_layer, 16)
 
-    reg = regularizers.l1_l2(l2=0.005)
+    conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(input_layer)
+    conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(conv1)
+    pool1 = MaxPooling2D((2, 2))(conv1)
+    pool1 = Dropout(0.25)(pool1)
 
-    model = Sequential()
-    model.add(layers.BatchNormalization(input_shape=X.shape[1:]))
-    model.add(layers.Dense(100, activation="relu", kernel_regularizer=reg))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Dropout(rate=0.1))
-    model.add(layers.Dense(50, activation="relu", kernel_regularizer=reg))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Dropout(rate=0.1))
-    model.add(layers.Dense(10, activation="relu"))
-    model.add(layers.BatchNormalization(momentum=0.99))  # use momentum=0 for to only use statistic of the last seen minibatch in inference mode ("short memory"). Use 1 to average statistics of all seen batch during training histories.
-    model.add(layers.Dropout(rate=0.1))
-    model.add(layers.Dense(1, activation="linear"))
+    conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(pool1)
+    conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(conv2)
+    pool2 = MaxPooling2D((2, 2))(conv2)
+    pool2 = Dropout(0.5)(pool2)
+
+    conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(pool2)
+    conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(conv3)
+    pool3 = MaxPooling2D((2, 2))(conv3)
+    pool3 = Dropout(0.5)(pool3)
+
+    conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(pool3)
+    conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(conv4)
+    pool4 = MaxPooling2D((2, 2))(conv4)
+    pool4 = Dropout(0.5)(pool4)
+
+    # Middle
+    convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(pool4)
+    convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(convm)
+
+    deconv4 = Conv2DTranspose(start_neurons * 8, (3, 3), strides=(2, 2), padding="same")(convm)
+    uconv4 = concatenate([deconv4, conv4])
+    uconv4 = Dropout(0.5)(uconv4)
+    uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
+    uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
+
+    deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding="same")(uconv4)
+    uconv3 = concatenate([deconv3, conv3])
+    uconv3 = Dropout(0.5)(uconv3)
+    uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
+    uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
+
+    deconv2 = Conv2DTranspose(start_neurons * 2, (3, 3), strides=(2, 2), padding="same")(uconv3)
+    uconv2 = concatenate([deconv2, conv2])
+    uconv2 = Dropout(0.5)(uconv2)
+    uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
+    uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
+
+    deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding="same")(uconv2)
+    uconv1 = concatenate([deconv1, conv1])
+    uconv1 = Dropout(0.5)(uconv1)
+    uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
+    uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
+
+    output_layer = Conv2D(1, (1,1), padding="same", activation="sigmoid")(uconv1)
+
+    model = Model(inputs=[input_layer], outputs = [output_layer])
 
     print("\n✅ model initialized")
 
     return model
 
 
+
+
+
 def compile_model(model: Model, learning_rate: float) -> Model:
     """
     Compile the Neural Network
     """
-    optimizer = optimizers.Adam(learning_rate=learning_rate)
-    model.compile(loss="mean_squared_error", optimizer=optimizer, metrics=["mae"])
+    model = initialize_model(input_layer,16)
+    model.compile(loss='mse',
+                  optimizer="rmsprop",
+                  metrics=rmse())
+    model.fit(test,y)
 
-    print("\n✅ model compiled")
+    print("\n✅ model compiled and fitted")
     return model
 
+
+###############################################################
 
 def train_model(model: Model,
                 X: np.ndarray,
