@@ -63,17 +63,17 @@ def load_dataset():
     # set the number of chip_id's for each 'chunk': 'chunk' size
     chip_id_size = int(os.getenv('CHIP_ID_SIZE'))
 
-    # Filter 'features_metadata' with mode and month
-    featuresmonth = features_per_month (features, month)
-    featuresmode = features_mode (featuresmonth, mode)
-    features_to_download = features_not_downloaded (featuresmode)
-    num_file = filters[month]
-
     datafiles = os.listdir(os.path.expanduser(raw_data_path))
     datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
     features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
     features.to_csv(os.path.expanduser(features_path), index = False)
 
+
+    # Filter 'features_metadata' with mode and month
+    featuresmonth = features_per_month (features, month)
+    featuresmode = features_mode (featuresmonth, mode)
+    features_to_download = features_not_downloaded (featuresmode)
+    num_file = filters[month]
 
     # Download files according to 'features_to_download' dataframe
     if chip_id_size <= 20:
