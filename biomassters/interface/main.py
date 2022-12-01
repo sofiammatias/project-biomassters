@@ -7,9 +7,11 @@ from colorama import Fore, Style
 from biomassters.data_sources.aws import get_aws_chunk
 from biomassters.data_sources.utils import features_not_downloaded
 from biomassters.data_sources.utils import features_per_month, features_mode
+from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_PATH
+from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
+
 
 #from taxifare.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
-#from taxifare.ml_logic.params import CHUNK_SIZE, DATASET_SIZE, VALIDATION_DATASET_SIZE
 #from taxifare.ml_logic.preprocessor import preprocess_features
 #from taxifare.ml_logic.utils import get_dataset_timestamp
 #from taxifare.ml_logic.registry import get_model_version
@@ -27,9 +29,9 @@ chip_id_letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 combs = [val1+val2 for val1 in chip_id_letters for val2 in chip_id_letters]
 
 def load_all_dataset():
-    raw_data_path = os.getenv('LOCAL_DATA_PATH')
-    agbm_s3_path = os.getenv('TRAIN_AGBM_S3_PATH')
-    features_train_path = os.getenv('FEATURES_TRAIN_S3_PATH')
+    raw_data_path = LOCAL_DATA_PATH
+    agbm_s3_path = AGBM_S3_PATH
+    features_train_path = FEATURES_TRAIN_S3_PATH
     aws_cli_agbm = f'aws s3 cp {agbm_s3_path} {raw_data_path} --recursive --no-sign-request'
     aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_agbm)
@@ -45,13 +47,13 @@ def load_dataset():
 
     # Code to verify LOCAL_DATA_PATH folder existence and create in case it doesn't
     # LOAL_DATA_PATH is the path to download raw data files
-    raw_data_path = os.getenv('LOCAL_DATA_PATH')
-    features_path = os.getenv('FEATURES')
-    agbm_s3_path = os.getenv('TRAIN_AGBM_S3_PATH')
+    raw_data_path = LOCAL_DATA_PATH
+    features_path = FEATURES_PATH
+    agbm_s3_path = AGBM_S3_PATH
 
-    if not os.path.exists(raw_data_path):
-        os.makedirs (raw_data_path)
-        print (Fore.BLUE + f'\nFolder {raw_data_path} was created\n' + Style.RESET_ALL)
+    if not os.path.exists(os.path.expanduser(raw_data_path)):
+        os.makedirs(os.path.expanduser(raw_data_path))
+        print(Fore.BLUE + f'\nFolder {raw_data_path} was created\n' + Style.RESET_ALL)
 
     # Loading remaining data from env variables
     # 'features_metadata'
@@ -63,29 +65,29 @@ def load_dataset():
     # set the number of chip_id's for each 'chunk': 'chunk' size
     chip_id_size = int(os.getenv('CHIP_ID_SIZE'))
 
+    datafiles = os.listdir(os.path.expanduser(raw_data_path))
+    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
+    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm)).astype(bool)
+    features.to_csv(os.path.expanduser(features_path), index = False)
+
+
     # Filter 'features_metadata' with mode and month
     featuresmonth = features_per_month (features, month)
     featuresmode = features_mode (featuresmonth, mode)
     features_to_download = features_not_downloaded (featuresmode)
     num_file = filters[month]
 
-    datafiles = os.listdir(os.path.expanduser(raw_data_path))
-    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
-    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
-    features.to_csv(os.path.expanduser(features_path), index = False)
-
-
     # Download files according to 'features_to_download' dataframe
     if chip_id_size <= 20:
         chip_id_list = features_to_download['chip_id'].unique()[: chip_id_size]
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id_list, num_file)
-    elif chip_id_size >= 100:
-        chip_id = combs
+    elif chip_id_size >= 50:
+        chip_id = np.asarray ([init + '*' for init in combs])
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id, num_file)
     elif chip_id_size >= 1000:
-        chip_id = chip_id_letters
+        chip_id = np.asarray ([init + '*' for init in chip_id_letters])
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id, num_file)
 
@@ -96,7 +98,6 @@ def load_dataset():
     features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
     features.to_csv(os.path.expanduser(features_path), index = False)
     print (Fore.GREEN + f"\n'features_metadata.csv' updated with downloaded files\n" + Style.RESET_ALL)
-
 
 
 
