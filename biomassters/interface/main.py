@@ -80,12 +80,12 @@ def load_dataset():
         chip_id_list = features_to_download['chip_id'].unique()[: chip_id_size]
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id_list, num_file)
-    elif chip_id_size >= 100:
-        chip_id = combs
+    elif chip_id_size >= 50:
+        chip_id = np.asarray ([init + '*' for init in combs])
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id, num_file)
     elif chip_id_size >= 1000:
-        chip_id = chip_id_letters
+        chip_id = np.asarray ([init + '*' for init in chip_id_letters])
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id, num_file)
 
