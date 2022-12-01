@@ -95,6 +95,10 @@ def compile_model(model: Model, learning_rate: float) -> Model:
     model.compile(loss='mse',
                   optimizer="rmsprop",
                   metrics=rmse())
+<<<<<<< HEAD
+=======
+
+>>>>>>> 672efd69935ac078b1bde25c9a1f66ba95e5c4ff
 
     print("\n✅ model compiled and fitted")
     return model
@@ -156,9 +160,9 @@ def evaluate_model(model: Model,
         # callbacks=None,
         return_dict=True)
 
-    loss = metrics["loss"]
-    mae = metrics["mae"]
+    loss = metrics["mse"]
+    mse = metrics["mse"]
 
-    print(f"\n✅ model evaluated: loss {round(loss, 2)} mae {round(mae, 2)}")
+    print(f"\n✅ model evaluated: loss {round(loss, 2)} mae {round(mse, 2)}")
 
     return metrics

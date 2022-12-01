@@ -9,6 +9,7 @@ from biomassters.data_sources.utils import features_not_downloaded, check_data_p
 from biomassters.data_sources.utils import features_per_month, features_mode
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_PATH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
+from biomassters.ml_logic.data import get_chunk
 
 
 #from taxifare.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
@@ -107,72 +108,18 @@ def load_dataset():
 
 def preprocess(source_type = 'train'):
     """
-    Preprocess the dataset by chunks fitting in memory.
-    parameters:
-    - source_type: 'train' or 'val'
+    This string takes a source from a set path and returns an array
     """
+    X = []
 
-    print("\n⭐️ Use case: preprocess")
+    img = tifffile.imread(path)
+    img = tf.image.per_image_standardization(img)
+    img = tf.expand_dims(img,axis=0)
+    X.append(img)
+    print(f"\n✅ Data processed saved entirely")
+    prepro_data = np.asarray(X)
+    return prepro_data
 
-    # Iterate on the dataset, in chunks
-    chunk_id = 0
-    row_count = 0
-    cleaned_row_count = 0
-    source_name = f"{source_type}_{DATASET_SIZE}"
-    destination_name = f"{source_type}_processed_{DATASET_SIZE}"
-
-    while (True):
-        print(Fore.BLUE + f"\nProcessing chunk n°{chunk_id}..." + Style.RESET_ALL)
-
-        data_chunk = get_chunk(
-            source_name=source_name,
-            index=chunk_id * CHUNK_SIZE,
-            chunk_size=CHUNK_SIZE
-        )
-
-        # Break out of while loop if data is none
-        if data_chunk is None:
-            print(Fore.BLUE + "\nNo data in latest chunk..." + Style.RESET_ALL)
-            break
-
-        row_count += data_chunk.shape[0]
-
-        data_chunk_cleaned = clean_data(data_chunk)
-
-        cleaned_row_count += len(data_chunk_cleaned)
-
-        # Break out of while loop if cleaning removed all rows
-        if len(data_chunk_cleaned) == 0:
-            print(Fore.BLUE + "\nNo cleaned data in latest chunk..." + Style.RESET_ALL)
-            break
-
-        X_chunk = data_chunk_cleaned.drop("fare_amount", axis=1)
-        y_chunk = data_chunk_cleaned[["fare_amount"]]
-
-        X_processed_chunk = preprocess_features(X_chunk)
-
-        data_processed_chunk = pd.DataFrame(
-            np.concatenate((X_processed_chunk, y_chunk), axis=1)
-        )
-
-        # Save and append the chunk
-        is_first = chunk_id == 0
-
-        save_chunk(
-            destination_name=destination_name,
-            is_first=is_first,
-            data=data_processed_chunk
-        )
-
-        chunk_id += 1
-
-    if row_count == 0:
-        print("\n✅ No new data for the preprocessing 👌")
-        return None
-
-    print(f"\n✅ Data processed saved entirely: {row_count} rows ({cleaned_row_count} cleaned)")
-
-    return None
 
 def train():
     """
@@ -186,20 +133,19 @@ def train():
     print(Fore.BLUE + "\nLoading preprocessed validation data..." + Style.RESET_ALL)
 
     # Load a validation set common to all chunks, used to early stop model training
-    data_val_processed = get_chunk(
-        source_name=f"val_processed_{VALIDATION_DATASET_SIZE}",
-        index=0,  # retrieve from first row
-        chunk_size=None
-    )  # Retrieve all further data
+    data_val_processed = get_chunk(source_name: str,
+              index: int = 0,
+              chunk_size: int = None,
+              verbose=False)  # Retrieve all further data
 
     if data_val_processed is None:
         print("\n✅ no data to train")
         return None
 
-    data_val_processed = data_val_processed.to_numpy()
 
-    X_val_processed = data_val_processed[:, :-1]
-    y_val = data_val_processed[:, -1]
+
+    X_prepro_data = "file path here"
+    y_prepro_data = "file path here"
 
     model = None
     model = load_model()  # production model
