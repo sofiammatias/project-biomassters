@@ -5,7 +5,7 @@ import os
 from colorama import Fore, Style
 
 from biomassters.data_sources.aws import get_aws_chunk
-from biomassters.data_sources.utils import features_not_downloaded
+from biomassters.data_sources.utils import features_not_downloaded, check_data_path
 from biomassters.data_sources.utils import features_per_month, features_mode
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_PATH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
@@ -50,6 +50,8 @@ def load_dataset():
     raw_data_path = LOCAL_DATA_PATH
     features_path = FEATURES_PATH
     agbm_s3_path = AGBM_S3_PATH
+
+    check_data_path (raw_data_path)
 
     if not os.path.exists(os.path.expanduser(raw_data_path)):
         os.makedirs(os.path.expanduser(raw_data_path))

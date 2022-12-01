@@ -4,8 +4,13 @@ from colorama import Fore, Style
 import time
 print(Fore.BLUE + "\nLoading tensorflow..." + Style.RESET_ALL)
 start = time.perf_counter()
-
-
+import tensorflow as tf
+from tf.keras.layers import Conv2D
+from tf.keras.layers import MaxPooling2D
+from tf.keras.layers import Dropout, Conv2DTranspose, concatenate
+from tf.keras import Input
+from tf.keras import Model
+from tf.keras.metrics import RootMeanSquareError as rmse
 end = time.perf_counter()
 print(f"\n✅ tensorflow loaded ({round(end - start, 2)} secs)")
 
@@ -13,13 +18,6 @@ from typing import Tuple
 
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
-import tensorflow as tf
-from tf.keras.layers import Conv2D
-from tf.keras.layers import MaxPooling2D
-from tf.keras.layers import Dropout, Conv2DTranspose, concatenate
-from tf.keras import Input
-from tf.keras import layers, Model
-from tf.keras.metrics import RootMeanSquareError as rmse
 
 
 def initialize_model(input_layer, start_neurons) -> Model:
@@ -94,11 +92,9 @@ def compile_model(model: Model, learning_rate: float) -> Model:
     """
     Compile the Neural Network
     """
-    model = initialize_model(input_layer,16)
     model.compile(loss='mse',
                   optimizer="rmsprop",
                   metrics=rmse())
-    model.fit(test,y)
 
     print("\n✅ model compiled and fitted")
     return model

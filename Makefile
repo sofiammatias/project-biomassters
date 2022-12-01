@@ -1,15 +1,21 @@
 #################### PACKAGE ACTIONS ###################
 
+reinstall_package:
+	@pip uninstall -y biomassters || :
+	@pip install -e .
+
 load_all_dataset:
 	python -c 'from biomassters.interface.main import load_all_dataset; load_all_dataset()'
 
 load_dataset:
 	python -c 'from biomassters.interface.main import load_dataset; load_dataset()'
 
+organize_folders_user:
+	python -c 'from biomassters.data_sources.utils import organize_folders_user; organize_folders_user()'
 
-reinstall_package:
-	@pip uninstall -y biomassters || :
-	@pip install -e .
+organize_folders:
+	python -c 'from biomassters.data_sources.utils import organize_folders; organize_folders()'
+
 
 run_preprocess:
 	python -c 'from taxifare.interface.main import preprocess; preprocess(); preprocess(source_type="val")'
