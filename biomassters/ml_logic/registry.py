@@ -1,4 +1,4 @@
-from taxifare.ml_logic.params import LOCAL_REGISTRY_PATH
+from biomassters.ml_logic.params import LOCAL_REGISTRY_PATH
 
 import mlflow
 from mlflow.tracking import MlflowClient
@@ -9,8 +9,7 @@ import time
 import pickle
 
 from colorama import Fore, Style
-
-from tensorflow.keras import Model, models
+from keras import Model, models
 
 
 def save_model(model: Model = None,

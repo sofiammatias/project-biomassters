@@ -18,16 +18,16 @@ organize_folders:
 
 
 run_preprocess:
-	python -c 'from taxifare.interface.main import preprocess; preprocess(); preprocess(source_type="val")'
+	python -c 'from biomassters.interface.main import preprocess; preprocess(); preprocess(source_type="val")'
 
 run_train:
-	python -c 'from taxifare.interface.main import train; train()'
+	python -c 'from biomassters.interface.main import train; train()'
 
 run_pred:
-	python -c 'from taxifare.interface.main import pred; pred()'
+	python -c 'from biomassters.interface.main import pred; pred()'
 
 run_evaluate:
-	python -c 'from taxifare.interface.main import evaluate; evaluate()'
+	python -c 'from biomassters.interface.main import evaluate; evaluate()'
 
 run_all: run_preprocess run_train run_pred run_evaluate
 

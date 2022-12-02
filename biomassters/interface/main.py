@@ -1,25 +1,26 @@
 import numpy as np
 import pandas as pd
 import os
+import tifffile
 
 from colorama import Fore, Style
 
 from biomassters.data_sources.aws import get_aws_chunk
-from biomassters.data_sources.utils import features_not_downloaded, check_data_path
+from biomassters.data_sources.utils import features_not_downloaded
+from biomassters.data_sources.utils import features_downloaded, check_data_path
 from biomassters.data_sources.utils import features_per_month, features_mode
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, MODE, MONTH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
-from biomassters.ml_logic.params import FEATURES_TEST_S3_PATH, CHIP_ID_SIZE
-from biomassters.ml_logic.params import filters, chip_id_letters, combs
+from biomassters.ml_logic.params import FEATURES_TEST_S3_PATH, CHIP_ID_SIZE, PERC
+from biomassters.ml_logic.params import filters, chip_id_letters, combs, chip_id_folder
 from biomassters.ml_logic.data import get_chunk
 
 
-#from taxifare.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
-#from taxifare.ml_logic.preprocessor import preprocess_features
-#from taxifare.ml_logic.utils import get_dataset_timestamp
-#from taxifare.ml_logic.registry import get_model_version
+from biomassters.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
+from biomassters.ml_logic.preprocessor import preprocess_features
+from biomassters.ml_logic.registry import get_model_version
 
-#from biomassters.ml_logic.registry import load_model, save_model
+from biomassters.ml_logic.registry import load_model, save_model
 
 def load_all_dataset():
     raw_data_path = LOCAL_DATA_PATH
@@ -90,18 +91,25 @@ def load_dataset():
 
 
 
-def preprocess(source_type = 'train'):
+def preprocess():
     """
     This string takes a source from a set path and returns an array
     """
-    X = []
+    print(f"\nPreprocessing data...")
 
-    img = tifffile.imread(path)
-    img = tf.image.per_image_standardization(img)
-    img = tf.expand_dims(img,axis=0)
-    X.append(img)
+    breakpoint()
+    chip_ids_path = os.path.expanduser(f'{LOCAL_DATA_PATH}{MODE.capitalize()}/{chip_id_folder}')
+    list_chip_ids = os.listdir(chip_ids_path)
+    chip_ids = list_chip_ids[: int(len(list_chip_ids) * PERC)]
+    filt_features = features_per_month(FEATURES_FILE, MONTH)
+    filt_features = features_mode(filt_features, MODE)
+    filt_features = features_downloaded(filt_features)
+    filt_features = filt_features[filt_features['chip_id'] == chip_ids]
+
+    SFiles = [file for file in filt_features['filename']]
+
     print(f"\n✅ Data processed saved entirely")
-    prepro_data = np.asarray(X)
+    prepro_data = np.asarray(0)
     return prepro_data
 
 
@@ -218,7 +226,6 @@ def train():
         val_set_size=VALIDATION_DATASET_SIZE,
         row_count=row_count,
         model_version=get_model_version(),
-        dataset_timestamp=get_dataset_timestamp(),
     )
 
     # Save model
@@ -308,7 +315,6 @@ def pred(X_pred: pd.DataFrame = None) -> np.ndarray:
 
 if __name__ == '__main__':
     preprocess()
-    preprocess(source_type='val')
     train()
     pred()
     evaluate()
