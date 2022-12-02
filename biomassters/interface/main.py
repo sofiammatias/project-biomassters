@@ -9,7 +9,7 @@ from biomassters.data_sources.utils import features_not_downloaded, check_data_p
 from biomassters.data_sources.utils import features_per_month, features_mode
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, MODE, MONTH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
-from biomassters.ml_logic.params import FEATURES_TRAIN_S3_PATH, CHIP_ID_SIZE
+from biomassters.ml_logic.params import FEATURES_TEST_S3_PATH, CHIP_ID_SIZE
 from biomassters.ml_logic.params import filters, chip_id_letters, combs
 from biomassters.ml_logic.data import get_chunk
 
