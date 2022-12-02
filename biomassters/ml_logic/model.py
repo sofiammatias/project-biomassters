@@ -4,13 +4,11 @@ from colorama import Fore, Style
 import time
 print(Fore.BLUE + "\nLoading tensorflow..." + Style.RESET_ALL)
 start = time.perf_counter()
-import tensorflow as tf
-from tf.keras.layers import Conv2D
-from tf.keras.layers import MaxPooling2D
-from tf.keras.layers import Dropout, Conv2DTranspose, concatenate
-from tf.keras import Input
-from tf.keras import Model
-from tf.keras.metrics import RootMeanSquareError as rmse
+from tensorflow import keras
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate
+from keras import Input, Model
+from keras.callbacks import EarlyStopping
+from keras.metrics import RootMeanSquaredError as rmse
 end = time.perf_counter()
 print(f"\n✅ tensorflow loaded ({round(end - start, 2)} secs)")
 

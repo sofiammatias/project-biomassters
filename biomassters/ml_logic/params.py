@@ -1,5 +1,5 @@
 """
-taxifare model package params
+biomassters model package params
 load and validate the environment variables in the `.env`
 """
 
@@ -34,3 +34,7 @@ chip_id_letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                    'a', 'b', 'c', 'd', 'e', 'f']
 
 combs = [val1+val2 for val1 in chip_id_letters for val2 in chip_id_letters]
+
+# Others
+chip_id_folder = 'Chip_Id'
+PERC = float(os.getenv('PERC'))

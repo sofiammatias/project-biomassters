@@ -5,7 +5,7 @@ import os
 import shutil
 import tifffile
 
-from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE
+from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, chip_id_folder
 
 def features_per_month (features:pd.DataFrame, month:str) -> pd.DataFrame:
     """
@@ -24,6 +24,14 @@ def features_not_downloaded (features:pd.DataFrame) -> pd.DataFrame:
     Filter 'features_metadata' per using mode: train or test (uses 'split' column)
     """
     return features[features.file_downloaded == False]
+
+def features_downloaded (features:pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter 'features_metadata' per using mode: train or test (uses 'split' column)
+    """
+    return features[features.file_downloaded == True]
+
+
 
 def check_data_path (path):
     """
@@ -51,11 +59,11 @@ def organize_proj_folders (base_folder, old_path):
     counter = 0
     for file in files:
         test_features = features[features.split == 'test']
-        if file in test_features:
+        if True in test_features['filename'].str.contains(file).unique():
             first_folder = 'Test'
         else:
             first_folder = 'Train'
-        new_path = f'{base_folder}{first_folder}/Chip_Id/{file[:8]}'
+        new_path = f'{base_folder}{first_folder}/{chip_id_folder}/{file[:8]}'
         if 'S1' in file:
             new_path = f'{new_path}/S1'
             check_data_path(new_path)

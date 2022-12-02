@@ -3,6 +3,7 @@ streamlit
 ipdb
 ipykernel
 matplotlib
+tensorflow
 numpy
 pandas
 nbresult
@@ -26,15 +27,9 @@ pyarrow
 mlflow~=1.26.1
 
 python-dotenv
-prefect<2
-prefect[viz]
 psycopg2-binary
 
 # API
 fastapi
 pytz
 uvicorn
-# tests
-httpx
-pytest-asyncio
-python-dotenv
