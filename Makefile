@@ -17,8 +17,8 @@ organize_folders:
 	python -c 'from biomassters.data_sources.utils import organize_folders; organize_folders()'
 
 
-run_preprocess:
-	python -c 'from biomassters.interface.main import preprocess; preprocess(); preprocess(source_type="val")'
+run_import_data:
+	python -c 'from biomassters.ml_logic.data import import_data; import_data()'
 
 run_train:
 	python -c 'from biomassters.interface.main import train; train()'

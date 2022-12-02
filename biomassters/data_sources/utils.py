@@ -3,8 +3,6 @@ import pandas as pd
 from colorama import Fore, Style
 import os
 import shutil
-import tifffile
-
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, chip_id_folder
 
 def features_per_month (features:pd.DataFrame, month:str) -> pd.DataFrame:
@@ -30,7 +28,6 @@ def features_downloaded (features:pd.DataFrame) -> pd.DataFrame:
     Filter 'features_metadata' per using mode: train or test (uses 'split' column)
     """
     return features[features.file_downloaded == True]
-
 
 
 def check_data_path (path):
@@ -81,6 +78,7 @@ def organize_proj_folders (base_folder, old_path):
             counter += 1
             if counter == 10:
                 return None
+        print(Fore.BLUE + f'\n✅ All dataset files organized\n' + Style.RESET_ALL)
 
 
 
@@ -107,12 +105,3 @@ def organize_folders_user ():
     if old_path == '':
         old_path = base_folder
     organize_proj_folders (base_folder, old_path)
-
-
-
-def image_to_np(path, filename):
-    """
-    Read tif file and get a numpy array
-    """
-    file = os.path.join(f'{path}{filename}')
-    return tifffile.imread(file)

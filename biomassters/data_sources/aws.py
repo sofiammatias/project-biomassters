@@ -36,7 +36,7 @@ def get_aws_chunk(features: pd.DataFrame, raw_data_path:str,
     os.system(aws_cli_agbm)
     aws_cli_features = f'aws s3 cp {features_path} {raw_data_path} --recursive --exclude="*" {stringS1_features} {stringS2_features} --no-sign-request'
     os.system(aws_cli_features)
-    print (Fore.GREEN + f'\nFinished downloading files to {raw_data_path}.\n' + Style.RESET_ALL)
+    print (Fore.GREEN + f'\n✅ Finished downloading files to {raw_data_path}.\n' + Style.RESET_ALL)
     return None
 
 
