@@ -7,8 +7,10 @@ from colorama import Fore, Style
 from biomassters.data_sources.aws import get_aws_chunk
 from biomassters.data_sources.utils import features_not_downloaded, check_data_path
 from biomassters.data_sources.utils import features_per_month, features_mode
-from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_PATH
+from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, MODE, MONTH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
+from biomassters.ml_logic.params import FEATURES_TRAIN_S3_PATH, CHIP_ID_SIZE
+from biomassters.ml_logic.params import filters, chip_id_letters, combs
 from biomassters.ml_logic.data import get_chunk
 
 
@@ -19,16 +21,6 @@ from biomassters.ml_logic.data import get_chunk
 
 #from biomassters.ml_logic.registry import load_model, save_model
 
-filters= {'January': '04', 'February': '05', 'March': '06', 'April': '07',
-          'May': '08', 'June': '09', 'July': '10', 'August': '11',
-          'September': '00', 'October': '01', 'November': '02', 'December': '03',
-          'All': '*', }
-
-chip_id_letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                   'a', 'b', 'c', 'd', 'e', 'f']
-
-combs = [val1+val2 for val1 in chip_id_letters for val2 in chip_id_letters]
-
 def load_all_dataset():
     raw_data_path = LOCAL_DATA_PATH
     agbm_s3_path = AGBM_S3_PATH
@@ -37,7 +29,7 @@ def load_all_dataset():
     aws_cli_features_train = f'aws s3 cp {features_train_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_agbm)
     os.system(aws_cli_features_train)
-    features_test_path='s3://drivendata-competition-biomassters-public-eu/test_features/'
+    features_test_path = FEATURES_TEST_S3_PATH
     aws_cli_features_test = f'aws s3 cp {features_test_path} {raw_data_path} --recursive --no-sign-request'
     os.system(aws_cli_features_test)
 
@@ -47,9 +39,9 @@ def load_dataset():
 
 
     # Code to verify LOCAL_DATA_PATH folder existence and create in case it doesn't
-    # LOAL_DATA_PATH is the path to download raw data files
+    # LOAD_DATA_PATH is the path to download raw data files
     raw_data_path = LOCAL_DATA_PATH
-    features_path = FEATURES_PATH
+    features_path = FEATURES_FILE
     agbm_s3_path = AGBM_S3_PATH
 
     check_data_path (raw_data_path)
@@ -58,21 +50,16 @@ def load_dataset():
         os.makedirs(os.path.expanduser(raw_data_path))
         print(Fore.BLUE + f'\nFolder {raw_data_path} was created\n' + Style.RESET_ALL)
 
-    # Loading remaining data from env variables
-    # 'features_metadata'
-    features = pd.read_csv(os.getenv('FEATURES'))
-    # define usage mode: train or test
-    mode = os.getenv('MODE')
-    # set month to download files
-    month = os.getenv('MONTH')
-    # set the number of chip_id's for each 'chunk': 'chunk' size
-    chip_id_size = int(os.getenv('CHIP_ID_SIZE'))
+    features = FEATURES_FILE
+    mode = MODE
+    month = MONTH
+    chip_id_size = CHIP_ID_SIZE
 
+    # Updates 'features_metadata.csv' in case download was interrupted before
     datafiles = os.listdir(os.path.expanduser(raw_data_path))
     datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
     features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm)).astype(bool)
     features.to_csv(os.path.expanduser(features_path), index = False)
-
 
     # Filter 'features_metadata' with mode and month
     featuresmonth = features_per_month (features, month)
@@ -95,14 +82,11 @@ def load_dataset():
                           agbm_s3_path, chip_id, num_file)
 
     # Updates 'features_metadata.csv' with newly downloaded data
-
     datafiles = os.listdir(os.path.expanduser(raw_data_path))
     datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
     features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
     features.to_csv(os.path.expanduser(features_path), index = False)
     print (Fore.GREEN + f"\n'features_metadata.csv' updated with downloaded files\n" + Style.RESET_ALL)
-
-
 
 
 
@@ -133,10 +117,10 @@ def train():
     print(Fore.BLUE + "\nLoading preprocessed validation data..." + Style.RESET_ALL)
 
     # Load a validation set common to all chunks, used to early stop model training
-    data_val_processed = get_chunk(source_name: str,
-              index: int = 0,
-              chunk_size: int = None,
-              verbose=False)  # Retrieve all further data
+    #data_val_processed = get_chunk(source_name: str,
+    #          index: int = 0,
+    #          chunk_size: int = None,
+    #          verbose=False)  # Retrieve all further data
 
     if data_val_processed is None:
         print("\n✅ no data to train")

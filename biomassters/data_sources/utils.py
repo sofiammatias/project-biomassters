@@ -3,6 +3,7 @@ import pandas as pd
 from colorama import Fore, Style
 import os
 import shutil
+import tifffile
 
 from biomassters.ml_logic.params import LOCAL_DATA_PATH
 
@@ -77,12 +78,6 @@ def organize_folders_user ():
         - S2
         - GroundTruth
     """
-    def find(string, path):
-        for root, _, files in os.walk(path):
-            for name in files:
-                if string in name:
-                    return os.path(root)
-
     base_folder = LOCAL_DATA_PATH
     check_data_path (base_folder)
 
@@ -107,3 +102,12 @@ def organize_folders_user ():
         else:
             print (f"The path {old_path} doesn't have any dataset files")
             return None
+
+
+
+def image_to_np(path, filename):
+    """
+    Read tif file and get a numpy array
+    """
+    file = os.path.join(f'{path}{filename}')
+    return tifffile.imread(file)
