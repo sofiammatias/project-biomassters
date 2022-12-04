@@ -1,14 +1,16 @@
-from biomassters.ml_logic.params import LOCAL_DATA_PATH, MODE, MONTH
+from biomassters.ml_logic.params import LOCAL_DATA_PATH, LOCAL_OUTPUT_PATH, MODE, MONTH
 from biomassters.ml_logic.params import chip_id_folder, CHIP_ID_SIZE, PERC
+from biomassters.ml_logic.params import FEATURES_FILE
 from biomassters.ml_logic.model import image_to_np
+from biomassters.data_sources.utils import check_data_path
 
 #from taxifare.data_sources.local_disk import (get_pandas_chunk, save_local_chunk)
 #from taxifare.data_sources.big_query import (get_bq_chunk, save_bq_chunk)
 
-import os
+import os, tifffile, datetime
+from colorama import Fore, Style
 import pandas as pd
 import numpy as np
-from biomassters.data_sources.utils import image_to_np
 
 
 def import_data():
@@ -27,9 +29,20 @@ def import_data():
     X2 = []
     y = []
     n_chips = CHIP_ID_SIZE
+    features = FEATURES_FILE
+    if 'file_trained' not in features.columns:
+        features['file_trained'] = False
+    files_not_trained = features[features['file_trained'] == False]['chip_id'].tolist()
     basepath = os.path.expanduser(f'{LOCAL_DATA_PATH}{MODE.capitalize()}/{chip_id_folder}')
-    chip_ids = os.listdir(basepath)
-
+    all_chip_ids = os.listdir(basepath)
+    all_chip_ids.sort()
+    chip_ids = [chip_id for chip_id in all_chip_ids[:n_chips]
+                if (chip_id in files_not_trained) and
+                   (os.path.exists(f'{basepath}/{chip_id}/S1') and
+                   os.path.exists(f'{basepath}/{chip_id}/S2') and
+                   os.path.exists(f'{basepath}/{chip_id}/GroundTruth'))]
+    if len(chip_ids) < n_chips:
+        print(Fore.RED + f"\nThere is not enough data to import for {n_chips} chip id's. Run load_dataset to download some files." + Style.RESET_ALL)
 
     #chip_ids = list_chip_ids[: int(len(list_chip_ids) * PERC)]
     #filt_features = features_per_month(FEATURES_FILE, MONTH)
@@ -44,11 +57,11 @@ def import_data():
         path1_2 = os.path.join(path, 'S2')
         path1_3 = os.path.join(path, 'GroundTruth')
         files_list = [file for file in os.listdir(path1_1)]
-        breakpoint()
         files_list.sort()
         files_f = files_list[-5:]
         for x in range(0,len(files_f)):
             path2_1 = os.path.join(path1_1, files_f[x])
+            path2_3 = os.path.join(path1_3, )
             X1.append(image_to_np(path2_1))
         files_list = [file for file in os.listdir(path1_2)]
         files_list.sort()
@@ -56,13 +69,26 @@ def import_data():
         for x in range(0,len(files_f)):
             path2_2 = os.path.join(path1_2, files_f[x])
             X2.append(image_to_np(path2_2))
-        y.append (np.asarray(os.listdir(path1_3)))
+        files_list = os.listdir(path1_3)
+        for x in range(0,len(files_f)):
+            path2_3 = os.path.join(path1_3, files_list[0])
+            y.append (image_to_np(path2_3)) ####
 
-    return np.asarray(X1), np.asarray(X2), np.asarray(y), chip_ids
 
-def save_predictions(y_pred):
-    pass
+    return np.asarray(X1), np.asarray(X2), np.asarray(y), chip_ids[:n_chips]
+
+def save_predictions(y_pred, chip_ids_list):
     # Build a function that saves one numpy array into a tif image and stores it in LOCAL_OUTPUT_DATA
+
+    today = datetime.date.today()
+    save_path = LOCAL_OUTPUT_PATH + today
+    check_data_path (save_path)
+    os.chdir(os.path.expanduser(save_path))
+
+    for x, chip_id in enumerate(chip_ids_list):
+        tifffile.imwrite(f'{chip_id}_agbm.tif', y_pred[x], photometric='rgb')
+        print(Fore.GREEN + f'\nSaving prediction file {chip_id}_agbm.tif in folder {save_path}' + Style.RESET_ALL)
+
 
 
 #def get_chunk(source_name: str,

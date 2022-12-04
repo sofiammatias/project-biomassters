@@ -10,8 +10,10 @@ import pandas as pd
 # Important paths for project files and folders
 LOCAL_DATA_PATH = os.path.expanduser(os.getenv('LOCAL_DATA_PATH'))
 LOCAL_OUTPUT_PATH = os.path.expanduser(os.getenv('LOCAL_OUTPUT_PATH'))
+LOCAL_REGISTRY_PATH = os.path.expanduser(os.getenv('LOCAL_REGISTRY_PATH'))
 
 FEATURES_FILE = pd.read_csv (os.path.expanduser(os.getenv('FEATURES')))
+FEATURES_FILE_PATH = os.path.expanduser(os.getenv('FEATURES'))
 TRAIN_AGBM_FILE = pd.read_csv (os.path.expanduser(os.getenv('TRAIN_AGBM')))
 AGBM_S3_PATH = os.path.expanduser(os.getenv('TRAIN_AGBM_S3_PATH'))
 FEATURES_TRAIN_S3_PATH = os.path.expanduser(os.getenv('FEATURES_TRAIN_S3_PATH'))

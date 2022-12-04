@@ -20,15 +20,16 @@ import tifffile
 import numpy as np
 #from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
 
-def image_to_np(path, filename):
+def image_to_np(path):
     """
     Read tif file and get a numpy array with scaling applied and a dimensions added for
     modelling purposes (dimensions matching)
     """
-    filepath = os.path.join(f'{path}{filename}')
-    img = tifffile.imread(filepath)
+    img = tifffile.imread(path)
+    if len(img.shape) < 3:
+         img = np.asarray(img[:, :, np.newaxis])
     img = image.per_image_standardization(img)
-    img = expand_dims(img,axis=0)
+    img = expand_dims(img, axis=0)
 
     return img
 
@@ -102,8 +103,6 @@ def initialize_model(start_neurons) -> Model:
 
 
 
-
-
 def compile_model(model: Model) -> Model:
     """
     Compile the Neural Network
@@ -134,9 +133,9 @@ def train_model(model: Model,
     history = model.fit([X1, X2],
                         y,
                         epochs=5,
-                        verbose=0)
+                        verbose=1)
 
-    print(f"\n✅ model trained ({len(X1)} rows)")
+    print(f"\n✅ Model trained")
 
     return model, history
 

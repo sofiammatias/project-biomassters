@@ -5,9 +5,10 @@ import os
 from colorama import Fore, Style
 
 from biomassters.data_sources.aws import get_aws_chunk
-from biomassters.data_sources.utils import features_not_downloaded
-from biomassters.data_sources.utils import check_data_path
+from biomassters.data_sources.utils import features_not_downloaded, check_for_downloaded_files
+from biomassters.data_sources.utils import check_data_path, organize_folders
 from biomassters.data_sources.utils import features_per_month, features_mode
+from biomassters.data_sources.utils import set_trained_files
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, MODE, MONTH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
 from biomassters.ml_logic.params import FEATURES_TEST_S3_PATH, CHIP_ID_SIZE
@@ -33,9 +34,9 @@ def load_all_dataset():
 
 
 def load_dataset():
-
-
-    # Code to verify LOCAL_DATA_PATH folder existence and create in case it doesn't
+    """
+    Verifies LOCAL_DATA_PATH folder existence and creates it in case it doesn't exist
+    """
     # LOAD_DATA_PATH is the path to download raw data files
     raw_data_path = LOCAL_DATA_PATH
     features_path = FEATURES_FILE
@@ -52,11 +53,9 @@ def load_dataset():
     month = MONTH
     chip_id_size = CHIP_ID_SIZE
 
-    # Updates 'features_metadata.csv' in case download was interrupted before
-    datafiles = os.listdir(os.path.expanduser(raw_data_path))
-    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
-    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm)).astype(bool)
-    features.to_csv(os.path.expanduser(features_path), index = False)
+    if features['file_downloaded'] is None:
+        features['file_downloaded'] = False
+        features.to_csv(os.path.expanduser(features_path), index = False)
 
     # Filter 'features_metadata' with mode and month
     featuresmonth = features_per_month (features, month)
@@ -78,26 +77,20 @@ def load_dataset():
         get_aws_chunk(features_to_download, raw_data_path,
                           agbm_s3_path, chip_id, num_file)
 
-    # Updates 'features_metadata.csv' with newly downloaded data
-    datafiles = os.listdir(os.path.expanduser(raw_data_path))
-    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
-    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
-    features.to_csv(os.path.expanduser(features_path), index = False)
-    print (Fore.GREEN + f"\n✅ 'features_metadata.csv' updated with downloaded files\n" + Style.RESET_ALL)
 
 
 
-def preprocess():
+def organizing_data():
     """
     This string takes a source from a set path and returns an array
     """
-    print(f"\nPreprocessing data...")
+    print(f"\n⭐️ Use case: organize data")
+    print(f"\nOrganizing data folders and checking downloaded files for errors...")
 
-    import_data()
+    organize_folders()
+    check_for_downloaded_files()
 
-    print(f"\n✅ Data processed saved entirely")
-    prepro_data = np.asarray(0)
-    return prepro_data
+    print(f"\n✅ Data is ready for processing")
 
 
 def train():
@@ -107,9 +100,9 @@ def train():
     Save final model once it has seen all data, and compute validation metrics
     common to all chunks.
     """
-    print(f"\n⭐️ Use case: {MODE}")
+    print(f"\n⭐️ Use case: train")
 
-    print(Fore.BLUE + "\nLoading preprocessed validation data..." + Style.RESET_ALL)
+    print(Fore.BLUE + "\nLoading data..." + Style.RESET_ALL)
 
     # Load a validation set common to all chunks, used to early stop model training
     #data_val_processed = get_chunk(source_name: str,
@@ -117,10 +110,15 @@ def train():
     #          chunk_size: int = None,
     #          verbose=False)  # Retrieve all further data
 
-
-
+    if not os.path.exists(f'{LOCAL_DATA_PATH}{MODE.capitalize()}'):
+        print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first." + Style.RESET_ALL)
+        return None
 
     X1, X2, y, chip_ids_list = import_data()
+
+    if  (X1 is None) and (X2 is None) and (y is None) and (chip_ids_list is None):
+        print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first or download files to continue." + Style.RESET_ALL)
+        return None
 
     model = None
     model = load_model()  # production model
@@ -128,9 +126,9 @@ def train():
     # Iterate on the full dataset per chunks
     metrics_val_list = []
 
-    for x, chip_id in enumerate (chip_ids_list):
+    for x in range(len(X1)):
 
-        print(Fore.BLUE + f"\nLoading and training for chip_id {chip_id}..." + Style.RESET_ALL)
+        print(Fore.BLUE + f"\nLoading and training data cycle {x + 1} from {len(X1)}..." + Style.RESET_ALL)
 
         # Initialize model
         if model is None:
@@ -138,34 +136,34 @@ def train():
 
         # (Re-)compile and train the model incrementally
         model = compile_model(model)
+        #breakpoint()
         model, history = train_model(model, X1[x], X2[x], y[x])
-
-        metrics_val_chunk = np.min(history.history['val_mse'])
+        metrics_val_chunk = np.min(history.history['root_mean_squared_error'])
         metrics_val_list.append(metrics_val_chunk)
         print(f"Chunk RMSE: {round(metrics_val_chunk,2)}")
 
-        print("\n✅ no new data for the training 👌")
-
 
     # Return the last value of the validation MAE
-    val_mse = metrics_val_list[-1]
+    rmse = metrics_val_list[-1]
 
-    print(f"\n✅ Trained on {len(chip_ids_list)} chip_id's with RMSE: {round(val_mse, 2)} 👌")
+    print(f"\n✅ Trained on {len(chip_ids_list)} chip_id's with RMSE: {round(rmse, 2)} 👌")
 
     params = dict(
         # Model parameters
         chip_id_size = len(chip_ids_list),
         # Package behavior
-        context=MODE,
+        context='train',
         # Data source
         training_set_size=len(X1),
         model_version=get_model_version(),
     )
 
     # Save model
-    save_model(model=model, params=params, metrics=dict(mse=val_mse))
+    save_model(model=model, params=params, metrics=dict(rmse=rmse))
 
-    return val_mse
+    set_trained_files()
+
+    return rmse
 
 
 def evaluate():
@@ -180,7 +178,7 @@ def evaluate():
 
     model = load_model()
 
-    for x, chip_id in enumerate (chip_ids_list):
+    for x, _ in enumerate (chip_ids_list):
         metrics_dict = evaluate_model(model=model, X1=X1[x], X2=X2[x], y=y[x])
         mse = metrics_dict["mse"]
 
@@ -215,20 +213,14 @@ def pred(X_pred: pd.DataFrame = None) -> np.ndarray:
     from biomassters.ml_logic.registry import load_model
 
     if X_pred is None:
-
-        X_pred = pd.DataFrame(dict(
-            key=["2013-07-06 17:18:00"],  # useless but the pipeline requires it
-            pickup_datetime=["2013-07-06 17:18:00 UTC"],
-            pickup_longitude=[-73.950655],
-            pickup_latitude=[40.783282],
-            dropoff_longitude=[-73.984365],
-            dropoff_latitude=[40.769802],
-            passenger_count=[1]
-        ))
+        os.environ['MODE'] = 'test'
+        MODE = 'test'
+        X1_pred, X2_pred, _, chip_ids_list = import_data()
 
     model = load_model()
 
-    y_pred = model.predict(X_pred)
+    for x, _ in enumerate (chip_ids_list):
+        y_pred = model.predict(X1_pred[x], X2_pred[x])
 
     print("\n✅ Prediction done: image with shape ", y_pred.shape)
 
@@ -241,7 +233,7 @@ def pred(X_pred: pd.DataFrame = None) -> np.ndarray:
 
 
 if __name__ == '__main__':
-    preprocess()
+    organizing_data()
     train()
     pred()
     evaluate()

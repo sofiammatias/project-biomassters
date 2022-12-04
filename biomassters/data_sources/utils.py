@@ -1,9 +1,12 @@
 
 import pandas as pd
+import numpy as np
 from colorama import Fore, Style
 import os
 import shutil
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, chip_id_folder
+from biomassters.ml_logic.params import FEATURES_FILE_PATH, chip_id_folder
+
 
 def features_per_month (features:pd.DataFrame, month:str) -> pd.DataFrame:
     """
@@ -78,8 +81,6 @@ def organize_proj_folders (base_folder, old_path):
             counter += 1
             if counter == 10:
                 return None
-        print(Fore.BLUE + f'\n✅ All dataset files organized\n' + Style.RESET_ALL)
-
 
 
 
@@ -91,6 +92,8 @@ def organize_folders ():
     check_data_path (base_folder)
     old_path = base_folder
     organize_proj_folders (base_folder, old_path)
+    print(Fore.BLUE + f'\n✅ All dataset files  from {old_path} organized\n' + Style.RESET_ALL)
+
 
 
 
@@ -105,3 +108,38 @@ def organize_folders_user ():
     if old_path == '':
         old_path = base_folder
     organize_proj_folders (base_folder, old_path)
+    print(Fore.BLUE + f'\n✅ All dataset files from {old_path} organized\n' + Style.RESET_ALL)
+
+
+
+def check_for_downloaded_files():
+    """
+    Checks for dataset downloaded files in LOCAL_DATA_PATH and updates 'features_
+    metadata' column 'file_downloaded' accordingly to keep track of files already
+    downloaded
+    """
+    # Add checksum here if there's time
+
+    # Updates 'features_metadata.csv' with newly downloaded data
+    datafiles = [file for _,_,f in os.walk(LOCAL_DATA_PATH) for file in f]
+    datafiles_no_agbm = [item for item in datafiles if 'agbm' not in item]
+    features = FEATURES_FILE
+    if 'file_downloaded' not in features.columns:
+        features['file_downloaded'] = False
+    features['file_downloaded'] = features['filename'].isin(pd.Series(datafiles_no_agbm))
+    features.to_csv(os.path.expanduser(FEATURES_FILE_PATH), index = False)
+    print (Fore.GREEN + f"\n✅ 'features_metadata.csv' updated with downloaded files\n" + Style.RESET_ALL)
+
+
+def set_trained_files(chip_id_list:np.ndarray):
+    """
+    Once a model is saved, the list of chip_ids is updated in 'features_metadata'
+    in a new column 'file_trained' to keep track of files already trained in the model
+    """
+    # Updates 'features_metadata.csv' with newly trained data
+    features = FEATURES_FILE
+    if 'file_trained' not in features.columns:
+        features['file_trained'] = False
+    features['file_trained'] = features['chip_id'].isin(pd.Series(chip_id_list))
+    features.to_csv(os.path.expanduser(FEATURES_FILE_PATH), index = False)
+    print (Fore.GREEN + f"\n✅ 'features_metadata.csv' updated with trained files\n" + Style.RESET_ALL)

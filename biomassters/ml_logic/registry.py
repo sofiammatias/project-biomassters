@@ -1,13 +1,12 @@
 from biomassters.ml_logic.params import LOCAL_REGISTRY_PATH
+from biomassters.data_sources.utils import check_data_path
 
 import mlflow
 from mlflow.tracking import MlflowClient
-
 import glob
 import os
 import time
 import pickle
-
 from colorama import Fore, Style
 from keras import Model, models
 
@@ -55,6 +54,10 @@ def save_model(model: Model = None,
         return None
 
     print(Fore.BLUE + "\nSave model to local disk..." + Style.RESET_ALL)
+
+    breakpoint()
+
+    check_data_path (LOCAL_REGISTRY_PATH)
 
     # save params
     if params is not None:

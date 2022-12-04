@@ -13,12 +13,8 @@ load_dataset:
 organize_folders_user:
 	python -c 'from biomassters.data_sources.utils import organize_folders_user; organize_folders_user()'
 
-organize_folders:
-	python -c 'from biomassters.data_sources.utils import organize_folders; organize_folders()'
-
-
-run_import_data:
-	python -c 'from biomassters.ml_logic.data import import_data; import_data()'
+run_organizing_data:
+	python -c 'from biomassters.interface.main import organizing_data; organizing_data()'
 
 run_train:
 	python -c 'from biomassters.interface.main import train; train()'
