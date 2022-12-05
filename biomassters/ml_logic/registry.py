@@ -55,12 +55,12 @@ def save_model(model: Model = None,
 
     print(Fore.BLUE + "\nSave model to local disk..." + Style.RESET_ALL)
 
-    breakpoint()
-
     check_data_path (LOCAL_REGISTRY_PATH)
 
     # save params
     if params is not None:
+        params_path = os.path.join(LOCAL_REGISTRY_PATH, "params")
+        check_data_path (params_path)
         params_path = os.path.join(LOCAL_REGISTRY_PATH, "params", timestamp + ".pickle")
         print(f"- params path: {params_path}")
         with open(params_path, "wb") as file:
@@ -68,6 +68,8 @@ def save_model(model: Model = None,
 
     # save metrics
     if metrics is not None:
+        metrics_path = os.path.join(LOCAL_REGISTRY_PATH, "metrics")
+        check_data_path (metrics_path)
         metrics_path = os.path.join(LOCAL_REGISTRY_PATH, "metrics", timestamp + ".pickle")
         print(f"- metrics path: {metrics_path}")
         with open(metrics_path, "wb") as file:
@@ -75,6 +77,8 @@ def save_model(model: Model = None,
 
     # save model
     if model is not None:
+        model_path = os.path.join(LOCAL_REGISTRY_PATH, "models")
+        check_data_path (model_path)
         model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", timestamp)
         print(f"- model path: {model_path}")
         model.save(model_path)

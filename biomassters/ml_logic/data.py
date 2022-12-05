@@ -36,13 +36,17 @@ def import_data():
     basepath = os.path.expanduser(f'{LOCAL_DATA_PATH}{MODE.capitalize()}/{chip_id_folder}')
     all_chip_ids = os.listdir(basepath)
     all_chip_ids.sort()
-    chip_ids = [chip_id for chip_id in all_chip_ids[:n_chips]
-                if (chip_id in files_not_trained) and
-                   (os.path.exists(f'{basepath}/{chip_id}/S1') and
-                   os.path.exists(f'{basepath}/{chip_id}/S2') and
-                   os.path.exists(f'{basepath}/{chip_id}/GroundTruth'))]
+    chip_ids = []
+    for chip_id in all_chip_ids:
+        if (chip_id in files_not_trained) and (os.path.exists(f'{basepath}/{chip_id}/S1')
+            and os.path.exists(f'{basepath}/{chip_id}/S2')
+            and os.path.exists(f'{basepath}/{chip_id}/GroundTruth')):
+            chip_ids.append (chip_id)
+            if len(chip_ids) == n_chips:
+                break
     if len(chip_ids) < n_chips:
         print(Fore.RED + f"\nThere is not enough data to import for {n_chips} chip id's. Run load_dataset to download some files." + Style.RESET_ALL)
+        return None
 
     #chip_ids = list_chip_ids[: int(len(list_chip_ids) * PERC)]
     #filt_features = features_per_month(FEATURES_FILE, MONTH)

@@ -161,7 +161,7 @@ def train():
     # Save model
     save_model(model=model, params=params, metrics=dict(rmse=rmse))
 
-    set_trained_files()
+    set_trained_files(chip_ids_list)
 
     return rmse
 
