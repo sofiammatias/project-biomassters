@@ -55,7 +55,6 @@ def organize_proj_folders (base_folder, old_path):
     files = os.listdir(old_path)
     files = [f for f in files if os.path.isfile(old_path+'/'+f)]
     features = FEATURES_FILE
-
     counter = 0
     for file in files:
         test_features = features[features.split == 'test']
