@@ -26,16 +26,24 @@ def image_to_np(path):
     modelling purposes (dimensions matching)
     """
     img = tifffile.imread(path)
-    if len(img.shape) < 3:
-         img = np.asarray(img[:, :, np.newaxis])
     img = image.per_image_standardization(img)
+    img = expand_dims(img, axis=0)
+
+    return img
+
+def image_to_np_y(path):
+    """
+    Read tif file and get a numpy array with scaling applied and a dimensions added for
+    modelling purposes (dimensions matching)
+    """
+    img = tifffile.imread(path)
     img = expand_dims(img, axis=0)
 
     return img
 
 
 
-def initialize_model(start_neurons) -> Model:
+def initialize_model(start_neurons = 32) -> Model:
     """
     Initialize the Neural Network for image processing
     """
@@ -125,17 +133,17 @@ def train_model(model: Model,
 
     print(Fore.BLUE + "\nTrain model..." + Style.RESET_ALL)
 
-    #es = EarlyStopping(monitor="val_mse",
-    #                   patience=patience,
-    #                   restore_best_weights=True,
-    #                   verbose=0)
-
-    history = model.fit([X1, X2],
-                        y,
-                        epochs=5,
-                        verbose=1)
-
-    print(f"\n✅ Model trained")
+    es = EarlyStopping(restore_best_weights = True)
+    i = 0
+    while i <= len(y)-1:
+        print(Fore.BLUE + f"\nTraining chip id number {i + 1}..." + Style.RESET_ALL)
+        for x in range(0, len(X1)-1):
+            history = model.fit([X1[x],X2[x]], y[i], verbose = 1, epochs = 5, callbacks = [es])
+            if (x+1)%5==0:
+                i+=1
+        if i == len(y)-1:
+            print(f"\n✅ Model trained")
+            break
 
     return model, history
 

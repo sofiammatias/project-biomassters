@@ -126,21 +126,20 @@ def train():
     # Iterate on the full dataset per chunks
     metrics_val_list = []
 
-    for x in range(len(X1)):
 
-        print(Fore.BLUE + f"\nLoading and training data cycle {x + 1} from {len(X1)}..." + Style.RESET_ALL)
+    # Initialize model
+    if model is None:
+        model = initialize_model(32)
 
-        # Initialize model
-        if model is None:
-            model = initialize_model(32)
 
-        # (Re-)compile and train the model incrementally
-        model = compile_model(model)
-        #breakpoint()
-        model, history = train_model(model, X1[x], X2[x], y[x])
-        metrics_val_chunk = np.min(history.history['root_mean_squared_error'])
-        metrics_val_list.append(metrics_val_chunk)
-        print(f"Chunk RMSE: {round(metrics_val_chunk,2)}")
+    # (Re-)compile and train the model incrementally
+    model = compile_model(model)
+    #breakpoint()
+
+    model, history = train_model(model, X1, X2, y)
+    metrics_val_chunk = np.min(history.history['root_mean_squared_error'])
+    metrics_val_list.append(metrics_val_chunk)
+    print(f"Chunk RMSE: {round(metrics_val_chunk,2)}")
 
 
     # Return the last value of the validation MAE

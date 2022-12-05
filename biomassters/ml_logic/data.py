@@ -1,7 +1,7 @@
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, LOCAL_OUTPUT_PATH, MODE, MONTH
 from biomassters.ml_logic.params import chip_id_folder, CHIP_ID_SIZE, PERC
 from biomassters.ml_logic.params import FEATURES_FILE
-from biomassters.ml_logic.model import image_to_np
+from biomassters.ml_logic.model import image_to_np, image_to_np_y
 from biomassters.data_sources.utils import check_data_path
 
 #from taxifare.data_sources.local_disk import (get_pandas_chunk, save_local_chunk)
@@ -56,16 +56,15 @@ def import_data():
     #basepath = '../raw_data/Train/Chip_Id/'
 
     for x in range(0, n_chips):
+        # Get Xs
         path = os.path.join(basepath, chip_ids[x])
         path1_1 = os.path.join(path, 'S1')
         path1_2 = os.path.join(path, 'S2')
-        path1_3 = os.path.join(path, 'GroundTruth')
         files_list = [file for file in os.listdir(path1_1)]
         files_list.sort()
         files_f = files_list[-5:]
         for x in range(0,len(files_f)):
             path2_1 = os.path.join(path1_1, files_f[x])
-            path2_3 = os.path.join(path1_3, )
             X1.append(image_to_np(path2_1))
         files_list = [file for file in os.listdir(path1_2)]
         files_list.sort()
@@ -73,10 +72,14 @@ def import_data():
         for x in range(0,len(files_f)):
             path2_2 = os.path.join(path1_2, files_f[x])
             X2.append(image_to_np(path2_2))
-        files_list = os.listdir(path1_3)
-        for x in range(0,len(files_f)):
-            path2_3 = os.path.join(path1_3, files_list[0])
-            y.append (image_to_np(path2_3)) ####
+
+
+        # Get y
+        #files_list = os.listdir(path1_3)
+        path1_3 = os.path.join(path, 'GroundTruth')
+        for file in os.listdir(path1_3):
+            path3 = os.path.join(path1_3, file)
+            y.append(image_to_np_y(path3))
 
 
     return np.asarray(X1), np.asarray(X2), np.asarray(y), chip_ids[:n_chips]
