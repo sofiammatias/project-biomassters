@@ -13,21 +13,17 @@ load_dataset:
 organize_folders_user:
 	python -c 'from biomassters.data_sources.utils import organize_folders_user; organize_folders_user()'
 
-organize_folders:
-	python -c 'from biomassters.data_sources.utils import organize_folders; organize_folders()'
-
-
-run_preprocess:
-	python -c 'from taxifare.interface.main import preprocess; preprocess(); preprocess(source_type="val")'
+run_organizing_data:
+	python -c 'from biomassters.interface.main import organizing_data; organizing_data()'
 
 run_train:
-	python -c 'from taxifare.interface.main import train; train()'
+	python -c 'from biomassters.interface.main import train; train()'
 
 run_pred:
-	python -c 'from taxifare.interface.main import pred; pred()'
+	python -c 'from biomassters.interface.main import pred; pred()'
 
 run_evaluate:
-	python -c 'from taxifare.interface.main import evaluate; evaluate()'
+	python -c 'from biomassters.interface.main import evaluate; evaluate()'
 
 run_all: run_preprocess run_train run_pred run_evaluate
 

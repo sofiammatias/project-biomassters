@@ -4,37 +4,54 @@ from colorama import Fore, Style
 import time
 print(Fore.BLUE + "\nLoading tensorflow..." + Style.RESET_ALL)
 start = time.perf_counter()
-import tensorflow as tf
-from tf.keras.layers import Conv2D
-from tf.keras.layers import MaxPooling2D
-from tf.keras.layers import Dropout, Conv2DTranspose, concatenate
-from tf.keras import Input
-from tf.keras import Model
-from tf.keras.metrics import RootMeanSquareError as rmse
+from tensorflow import keras
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate
+from keras import Input, Model
+from tensorflow import image, expand_dims
+from keras.callbacks import EarlyStopping
+from keras.metrics import RootMeanSquaredError as rmse
 end = time.perf_counter()
 print(f"\n✅ tensorflow loaded ({round(end - start, 2)} secs)")
 
 from typing import Tuple
+import os
+import tifffile
 
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
+#from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
 
-
-def initialize_model(input_layer, start_neurons) -> Model:
+def image_to_np(path):
     """
-    Initialize the Neural Network with random weights
+    Read tif file and get a numpy array with scaling applied and a dimensions added for
+    modelling purposes (dimensions matching)
+    """
+    img = tifffile.imread(path)
+    if len(img.shape) < 3:
+         img = np.asarray(img[:, :, np.newaxis])
+    img = image.per_image_standardization(img)
+    img = expand_dims(img, axis=0)
+
+    return img
+
+
+
+def initialize_model(start_neurons) -> Model:
+    """
+    Initialize the Neural Network for image processing
     """
     print("Initialize model..." )
-    input_layer = Input((256, 256,4))
-    #output_layer = build_model(input_layer, 16)
+    input1 = Input(shape=(256,256,4))
+    input2 = Input(shape=(256,256,11))
 
-    conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(input_layer)
-    conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(conv1)
+    conv1 = Conv2D(start_neurons * 1, (4, 4), activation="relu", padding="same")(input1)
+    conv1_1 = Conv2D(start_neurons * 1, (4, 4), activation="relu", padding="same")(input2)
+    conv1 = concatenate([conv1, conv1_1])
+    conv1 = Conv2D(start_neurons * 1, (4, 4), activation="relu", padding="same")(conv1)
     pool1 = MaxPooling2D((2, 2))(conv1)
     pool1 = Dropout(0.25)(pool1)
 
-    conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(pool1)
-    conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(conv2)
+    conv2 = Conv2D(start_neurons * 2, (4, 4), activation="relu", padding="same")(pool1)
+    conv2 = Conv2D(start_neurons * 2, (4, 4), activation="relu", padding="same")(conv2)
     pool2 = MaxPooling2D((2, 2))(conv2)
     pool2 = Dropout(0.5)(pool2)
 
@@ -48,7 +65,7 @@ def initialize_model(input_layer, start_neurons) -> Model:
     pool4 = MaxPooling2D((2, 2))(conv4)
     pool4 = Dropout(0.5)(pool4)
 
-    # Middle
+
     convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(pool4)
     convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(convm)
 
@@ -76,9 +93,9 @@ def initialize_model(input_layer, start_neurons) -> Model:
     uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
     uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
 
-    output_layer = Conv2D(1, (1,1), padding="same", activation="sigmoid")(uconv1)
+    output_layer = Conv2D(1, (1,1), padding="same", activation="linear")(uconv1)
 
-    model = Model(inputs=[input_layer], outputs = [output_layer])
+    model = Model(inputs=[input1, input2], outputs = [output_layer])
 
     print("\n✅ model initialized")
 
@@ -86,9 +103,7 @@ def initialize_model(input_layer, start_neurons) -> Model:
 
 
 
-
-
-def compile_model(model: Model, learning_rate: float) -> Model:
+def compile_model(model: Model) -> Model:
     """
     Compile the Neural Network
     """
@@ -99,65 +114,54 @@ def compile_model(model: Model, learning_rate: float) -> Model:
     return model
 
 
-###############################################################
-
 def train_model(model: Model,
-                X: np.ndarray,
-                y: np.ndarray,
-                batch_size=64,
-                patience=2,
-                validation_split=0.3,
-                validation_data=None) -> Tuple[Model, dict]:
+                X1: np.ndarray,
+                X2: np.ndarray,
+                y: np.ndarray,) -> Tuple[Model, dict]:
+
     """
     Fit model and return a the tuple (fitted_model, history)
     """
 
     print(Fore.BLUE + "\nTrain model..." + Style.RESET_ALL)
 
-    es = EarlyStopping(monitor="val_loss",
-                       patience=patience,
-                       restore_best_weights=True,
-                       verbose=0)
+    #es = EarlyStopping(monitor="val_mse",
+    #                   patience=patience,
+    #                   restore_best_weights=True,
+    #                   verbose=0)
 
-    history = model.fit(X,
+    history = model.fit([X1, X2],
                         y,
-                        validation_split=validation_split,
-                        validation_data=validation_data,
-                        epochs=100,
-                        batch_size=batch_size,
-                        callbacks=[es],
-                        verbose=0)
+                        epochs=5,
+                        verbose=1)
 
-    print(f"\n✅ model trained ({len(X)} rows)")
+    print(f"\n✅ Model trained")
 
     return model, history
 
 
 def evaluate_model(model: Model,
-                   X: np.ndarray,
-                   y: np.ndarray,
-                   batch_size=64) -> Tuple[Model, dict]:
+                   X1: np.ndarray,
+                   X2: np.ndarray,
+                   y: np.ndarray) -> Tuple[Model, dict]:
     """
     Evaluate trained model performance on dataset
     """
 
-    print(Fore.BLUE + f"\nEvaluate model on {len(X)} rows..." + Style.RESET_ALL)
+    print(Fore.BLUE + f"\nEvaluate model on {len(X1)} rows..." + Style.RESET_ALL)
 
     if model is None:
         print(f"\n❌ no model to evaluate")
         return None
 
-    metrics = model.evaluate(
-        x=X,
-        y=y,
-        batch_size=batch_size,
-        verbose=1,
-        # callbacks=None,
-        return_dict=True)
+    metrics = model.evaluate(x=[X1, X2],
+                                 y=y,
+                                 verbose=1,
+                                 return_dict=True)
 
     loss = metrics["mse"]
-    mse = metrics["mse"]
+    rmse = metrics["mse"]
 
-    print(f"\n✅ model evaluated: loss {round(loss, 2)} mae {round(mse, 2)}")
+    print(f"\n✅ model evaluated: loss {round(loss, 2)} rmse {round(rmse, 2)}")
 
     return metrics

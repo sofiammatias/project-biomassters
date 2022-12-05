@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import pandas as pd
 from biomassters.interface.main import load_dataset
+from contextlib import contextmanager, redirect_stdout
+from io import StringIO
 
 
 
@@ -10,7 +12,7 @@ from biomassters.interface.main import load_dataset
 '''
 
 st.markdown(f'''
-This is an app to download data for the BioMassters challenge.\n
+Here you can download data for the BioMassters challenge.\n
 Data will be downloaded in {os.getenv('LOCAL_DATA_PATH')}
 ''')
 
@@ -89,8 +91,24 @@ download_info = f""" \n Files to download: {len(file_list_df)} \n
 Download size: {download_size} Mb \n
 Download time @2Mb/s: {round(download_size / 120, ndigits = 2)} mins"""
 
+@contextmanager
+def st_capture(output_func):
+    with StringIO() as stdout, redirect_stdout(stdout):
+        old_write = stdout.write
+
+        def new_write(string):
+            ret = old_write(string)
+            output_func(stdout.getvalue())
+            return ret
+
+        stdout.write = new_write
+        yield
+
+
+output = st.empty()
 if st.button('Download files'):
-    os.system ("python -c 'from biomassters.interface.main import load_dataset; load_dataset()'")
+    with st_capture(output.code):
+        load_dataset()
 
 st.subheader("""Downloading Info""")
 st.info(download_info)
