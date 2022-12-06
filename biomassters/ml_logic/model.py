@@ -4,6 +4,7 @@ from colorama import Fore, Style
 import time
 print(Fore.BLUE + "\nLoading tensorflow..." + Style.RESET_ALL)
 start = time.perf_counter()
+import tensorflow
 from tensorflow import keras
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate
 from keras import Input, Model
@@ -16,9 +17,59 @@ print(f"\n✅ tensorflow loaded ({round(end - start, 2)} secs)")
 from typing import Tuple
 import os
 import tifffile
-
 import numpy as np
+from biomassters.ml_logic.params import CHIP_ID_PATH
 #from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
+
+
+def get_X1(chip_id):
+    basepath = CHIP_ID_PATH
+    X1 = []
+    path = os.path.join(basepath, chip_id)
+    path1_1 = os.path.join(path, 'S1')
+    files_list = [file for file in os.listdir(path1_1)]
+    for x in range(0,len(files_list)):
+        path2_1 = os.path.join(path1_1, files_list[x])
+        img = tifffile.imread(path2_1)
+        X1.append(img)
+    return X1
+
+def get_X2(chip_id):
+    basepath = CHIP_ID_PATH
+    X2=[]
+    path = os.path.join(basepath, chip_id)
+    path1_2 = os.path.join(path, 'S2')
+    files_list = [file for file in os.listdir(path1_2)]
+    for x in range(0,len(files_list)):
+        path2_2 = os.path.join(path1_2, files_list[x])
+        img = tifffile.imread(path2_2)
+        X2.append(img)
+    return X2
+
+
+def get_y(chip_id):
+    y=[]
+    basepath = CHIP_ID_PATH
+    path = os.path.join(basepath, chip_id)
+    path1_3 = os.path.join(path, 'GroundTruth')
+    for file in os.listdir(path1_3):
+        path2_3 = os.path.join(path1_3, file)
+        img = tifffile.imread(path2_3)
+        img = tensorflow.expand_dims(img,axis=0)
+        y.append(img)
+    return y
+
+
+def image_standard(X1):
+    """
+    Read tif file and get a numpy array with scaling applied and a dimensions added for
+    modelling purposes (dimensions matching)
+    """
+    X1 = image.per_image_standardization(X1)
+    X1 = expand_dims(X1, axis=0)
+
+    return X1
+
 
 def image_to_np(path):
     """
@@ -30,6 +81,7 @@ def image_to_np(path):
     img = expand_dims(img, axis=0)
 
     return img
+
 
 def image_to_np_y(path):
     """
@@ -132,18 +184,8 @@ def train_model(model: Model,
     """
 
     print(Fore.BLUE + "\nTrain model..." + Style.RESET_ALL)
-
     es = EarlyStopping(restore_best_weights = True)
-    i = 0
-    while i <= len(y)-1:
-        print(Fore.BLUE + f"\nTraining chip id number {i + 1}..." + Style.RESET_ALL)
-        for x in range(0, len(X1)-1):
-            history = model.fit([X1[x],X2[x]], y[i], verbose = 1, epochs = 5, callbacks = [es])
-            if (x+1)%5==0:
-                i+=1
-        if i == len(y)-1:
-            print(f"\n✅ Model trained")
-            break
+    history = model.fit([X1,X2], y, verbose = 1, epochs = 10, callbacks = [es])
 
     return model, history
 

@@ -16,8 +16,12 @@ organize_folders_user:
 run_organizing_data:
 	python -c 'from biomassters.interface.main import organizing_data; organizing_data()'
 
+run_train_all_dataset:
+	python -c 'from biomassters.interface.main import tra_allin; tr_allain()'
+
 run_train:
 	python -c 'from biomassters.interface.main import train; train()'
+
 
 run_pred:
 	python -c 'from biomassters.interface.main import pred; pred()'
@@ -25,7 +29,7 @@ run_pred:
 run_evaluate:
 	python -c 'from biomassters.interface.main import evaluate; evaluate()'
 
-run_all: run_preprocess run_train run_pred run_evaluate
+run_all: run_train run_pred
 
 # legacy directive
 run_model: run_all
@@ -34,7 +38,7 @@ run_workflow:
 	PREFECT__LOGGING__LEVEL=${PREFECT_LOG_LEVEL} python -m taxifare.flow.main
 
 run_api:
-	uvicorn taxifare.api.fast:app --reload
+	uvicorn biomassters.api.fast:app --reload
 
 ##################### STREAMLIT WEBSITE #####################
 

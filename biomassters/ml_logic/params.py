@@ -12,6 +12,7 @@ LOCAL_DATA_PATH = os.path.expanduser(os.getenv('LOCAL_DATA_PATH'))
 LOCAL_OUTPUT_PATH = os.path.expanduser(os.getenv('LOCAL_OUTPUT_PATH'))
 LOCAL_REGISTRY_PATH = os.path.expanduser(os.getenv('LOCAL_REGISTRY_PATH'))
 
+
 FEATURES_FILE = pd.read_csv (os.path.expanduser(os.getenv('FEATURES')))
 FEATURES_FILE_PATH = os.path.expanduser(os.getenv('FEATURES'))
 TRAIN_AGBM_FILE = pd.read_csv (os.path.expanduser(os.getenv('TRAIN_AGBM')))
@@ -39,4 +40,4 @@ combs = [val1+val2 for val1 in chip_id_letters for val2 in chip_id_letters]
 
 # Others
 chip_id_folder = 'Chip_Id'
-PERC = float(os.getenv('PERC'))
+CHIP_ID_PATH = f'{LOCAL_DATA_PATH}/{MODE.capitalize()}/{chip_id_folder}'

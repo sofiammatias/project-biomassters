@@ -142,3 +142,17 @@ def set_trained_files(chip_id_list:np.ndarray):
     features['file_trained'] = features['chip_id'].isin(pd.Series(chip_id_list))
     features.to_csv(os.path.expanduser(FEATURES_FILE_PATH), index = False)
     print (Fore.GREEN + f"\n✅ 'features_metadata.csv' updated with trained files\n" + Style.RESET_ALL)
+
+
+def set_predicted_chip_ids(chip_id_list:np.ndarray):
+    """
+    Once a chunk of predictions is done, the list of chip_ids is updated in 'features_metadata'
+    in a new column 'chip_id_predict' to keep track of chip ids already predicted in the model
+    """
+    # Updates 'features_metadata.csv' with newly trained data
+    features = FEATURES_FILE
+    if 'file_predict' not in features.columns:
+        features['chip_id_predict'] = False
+    features['chip_id_predict'] = features['chip_id'].isin(pd.Series(chip_id_list))
+    features.to_csv(os.path.expanduser(FEATURES_FILE_PATH), index = False)
+    print (Fore.GREEN + f"\n✅ 'features_metadata.csv' updated with trained files\n" + Style.RESET_ALL)

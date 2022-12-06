@@ -8,16 +8,17 @@ from biomassters.data_sources.aws import get_aws_chunk
 from biomassters.data_sources.utils import features_not_downloaded, check_for_downloaded_files
 from biomassters.data_sources.utils import check_data_path, organize_folders
 from biomassters.data_sources.utils import features_per_month, features_mode
-from biomassters.data_sources.utils import set_trained_files
+from biomassters.data_sources.utils import set_trained_files, set_predicted_chip_ids
 from biomassters.ml_logic.params import LOCAL_DATA_PATH, FEATURES_FILE, MODE, MONTH
 from biomassters.ml_logic.params import AGBM_S3_PATH ,FEATURES_TRAIN_S3_PATH
 from biomassters.ml_logic.params import FEATURES_TEST_S3_PATH, CHIP_ID_SIZE
 from biomassters.ml_logic.params import LOCAL_OUTPUT_PATH
 from biomassters.ml_logic.params import filters, chip_id_letters, combs
 from biomassters.ml_logic.model import initialize_model, compile_model, train_model, evaluate_model
-from biomassters.ml_logic.data import import_data, save_predictions
+from biomassters.ml_logic.data import import_data, get_predictions, create_chip_ids_list
 from biomassters.ml_logic.registry import get_model_version
 from biomassters.ml_logic.registry import load_model, save_model
+
 
 def load_all_dataset():
     raw_data_path = LOCAL_DATA_PATH
@@ -100,6 +101,8 @@ def train():
     Save final model once it has seen all data, and compute validation metrics
     common to all chunks.
     """
+    i = 0
+
     print(f"\n⭐️ Use case: train")
 
     print(Fore.BLUE + "\nLoading data..." + Style.RESET_ALL)
@@ -114,55 +117,78 @@ def train():
         print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first." + Style.RESET_ALL)
         return None
 
-    X1, X2, y, chip_ids_list = import_data()
+    chip_ids = create_chip_ids_list()
 
-    if  (X1 is None) and (X2 is None) and (y is None) and (chip_ids_list is None):
-        print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first or download files to continue." + Style.RESET_ALL)
-        return None
+    while i <= len(chip_ids):
 
-    model = None
-    model = load_model()  # production model
+        X1, X2, y = import_data(i, chip_ids)
 
-    # Iterate on the full dataset per chunks
-    metrics_val_list = []
+        if  (X1 is None) and (X2 is None) and (y is None):
+            print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first or download files to continue." + Style.RESET_ALL)
+            return None
 
+        if i in range(0, 8000, 1000):
+            model = None
+            model = load_model()  # production model
 
-    # Initialize model
-    if model is None:
-        model = initialize_model(32)
+            # Iterate on the full dataset per chunks
+            metrics_val_list = []
 
+            # Initialize model
+            if model is None:
+                model = initialize_model(32)
 
-    # (Re-)compile and train the model incrementally
-    model = compile_model(model)
-    #breakpoint()
+            # (Re-)compile and train the model incrementally
+            model = compile_model(model)
 
-    model, history = train_model(model, X1, X2, y)
-    metrics_val_chunk = np.min(history.history['root_mean_squared_error'])
-    metrics_val_list.append(metrics_val_chunk)
-    print(f"Chunk RMSE: {round(metrics_val_chunk,2)}")
+        print(f"Training on chip {chip_ids[i]}.")
+        model, history = train_model(model, X1, X2, y)
 
+        metrics_val_chunk = np.min(history.history['root_mean_squared_error'])
+        metrics_val_list.append(metrics_val_chunk)
+        rmse = metrics_val_list[-1]
 
-    # Return the last value of the validation MAE
-    rmse = metrics_val_list[-1]
+        print(f"Chunk RMSE: {round(metrics_val_chunk,2)}")
+        print(f"Done with chip {chip_ids[i]}!")
 
-    print(f"\n✅ Trained on {len(chip_ids_list)} chip_id's with RMSE: {round(rmse, 2)} 👌")
+        if i in range(0, 8000, 1000):
+            # Return the last value of the validation MAE
+            rmse = metrics_val_list[-1]
 
-    params = dict(
-        # Model parameters
-        chip_id_size = len(chip_ids_list),
-        # Package behavior
-        context='train',
-        # Data source
-        training_set_size=len(X1),
-        model_version=get_model_version(),
-    )
+            params = dict(
+                # Model parameters
+                chip_id_size = len(chip_ids),
+                # Package behavior
+                context='train',
+                # Data source
+               training_set_size=len(X1),
+                model_version=get_model_version(),
+            )
 
-    # Save model
-    save_model(model=model, params=params, metrics=dict(rmse=rmse))
+            # Save model
+            save_model(model=model, params=params, metrics=dict(rmse=rmse))
 
-    set_trained_files(chip_ids_list)
+        i += 1
 
-    return rmse
+        if i == len(chip_ids):
+
+            params = dict(
+                # Model parameters
+                chip_id_size = len(chip_ids),
+                # Package behavior
+                context='train',
+                # Data source
+                training_set_size=len(X1),
+                model_version=get_model_version(),
+                )
+
+            # Save model
+            save_model(model=model, params=params, metrics=dict(rmse=rmse))
+            print(f"\n✅All {len(chip_ids)} chips have been trained with RMSE: {round(rmse, 2)} 👌!")
+            break
+
+    return model, history
+
 
 
 def evaluate():
@@ -195,38 +221,25 @@ def evaluate():
 
     save_model(params=params, metrics=dict(mse=mse))
 
+    set_trained_files(chip_ids_list)
+
     return mse
 
-####################################################################
-# don't forget to include chip_id info for the file name
-# create a folder with name: biomassters-<current date>
-# run predictions the same way you run train: by chip_id_size
-
-def pred(X_pred: pd.DataFrame = None) -> np.ndarray:
+def pred() -> np.ndarray:
     """
     Make a prediction using the latest trained model
     """
 
     print("\n⭐️ Use case: predict")
 
-    from biomassters.ml_logic.registry import load_model
-
-    if X_pred is None:
-        os.environ['MODE'] = 'test'
-        MODE = 'test'
-        X1_pred, X2_pred, _, chip_ids_list = import_data()
+    os.environ['MODE'] = 'test'
+    MODE = 'test'
 
     model = load_model()
+    y_pred, chip_ids_list = get_predictions (model)
+    set_predicted_chip_ids(chip_ids_list)
 
-    for x, _ in enumerate (chip_ids_list):
-        y_pred = model.predict(X1_pred[x], X2_pred[x])
-
-    print("\n✅ Prediction done: image with shape ", y_pred.shape)
-
-    save_predictions(y_pred)
-
-    print(f"\n✅ Prediction saved in {LOCAL_OUTPUT_PATH} ", y_pred, y_pred.shape)
-
+    print(f"\n✅ Predictions saved in {LOCAL_OUTPUT_PATH} ")
 
     return y_pred
 

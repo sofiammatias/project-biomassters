@@ -108,20 +108,18 @@ def load_model(save_copy_locally=False) -> Model:
         try:
             model = mlflow.keras.load_model(model_uri=model_uri)
             print("\n✅ model loaded from mlflow")
+            if save_copy_locally:
+                from pathlib import Path
+
+                # Create the LOCAL_REGISTRY_PATH directory if it does exist
+                Path(LOCAL_REGISTRY_PATH).mkdir(parents=True, exist_ok=True)
+                timestamp = time.strftime("%Y%m%d-%H%M%S")
+                model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", timestamp)
+                model.save(model_path)
+
+            return model
         except:
             print(f"\n❌ no model in stage {stage} on mlflow")
-            return None
-
-        if save_copy_locally:
-            from pathlib import Path
-
-            # Create the LOCAL_REGISTRY_PATH directory if it does exist
-            Path(LOCAL_REGISTRY_PATH).mkdir(parents=True, exist_ok=True)
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
-            model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", timestamp)
-            model.save(model_path)
-
-        return model
 
     print(Fore.BLUE + "\nLoad model from local disk..." + Style.RESET_ALL)
 

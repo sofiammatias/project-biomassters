@@ -1,8 +1,10 @@
-from biomassters.ml_logic.params import LOCAL_DATA_PATH, LOCAL_OUTPUT_PATH, MODE, MONTH
-from biomassters.ml_logic.params import chip_id_folder, CHIP_ID_SIZE, PERC
-from biomassters.ml_logic.params import FEATURES_FILE
-from biomassters.ml_logic.model import image_to_np, image_to_np_y
+from biomassters.ml_logic.params import LOCAL_DATA_PATH, LOCAL_OUTPUT_PATH, MODE
+from biomassters.ml_logic.params import chip_id_folder, CHIP_ID_SIZE, MONTH
+from biomassters.ml_logic.params import FEATURES_FILE, CHIP_ID_PATH
+from biomassters.ml_logic.model import image_standard, get_X1, get_X2, get_y
 from biomassters.data_sources.utils import check_data_path
+
+import time
 
 #from taxifare.data_sources.local_disk import (get_pandas_chunk, save_local_chunk)
 #from taxifare.data_sources.big_query import (get_bq_chunk, save_bq_chunk)
@@ -13,7 +15,21 @@ import pandas as pd
 import numpy as np
 
 
-def import_data():
+def create_chip_ids_list():
+    basepath = os.path.expanduser(f'{LOCAL_DATA_PATH}{MODE.capitalize()}/{chip_id_folder}')
+    all_chip_ids = os.listdir(basepath)
+    all_chip_ids.sort()
+    chip_ids = []
+    for chip_id in all_chip_ids:
+        if (os.path.exists(f'{basepath}/{chip_id}/S1')
+            and os.path.exists(f'{basepath}/{chip_id}/S2')
+            and os.path.exists(f'{basepath}/{chip_id}/GroundTruth')):
+            chip_ids.append (chip_id)
+    return chip_ids
+
+
+
+def import_data(i, chip_ids):
     """
     import images data and transfors it into 2 arrays of 4 dimensions:
     X1 (X_files, 256, 256, channels_num = 4)
@@ -25,136 +41,56 @@ def import_data():
     """
 
     # get Xs and ys
-    X1 = []
-    X2 = []
-    y = []
-    n_chips = CHIP_ID_SIZE
-    features = FEATURES_FILE
-    if 'file_trained' not in features.columns:
-        features['file_trained'] = False
-    files_not_trained = features[features['file_trained'] == False]['chip_id'].tolist()
+    X1=get_X1(chip_ids[i])
+    X2=get_X2(chip_ids[i])
+    y=get_y(chip_ids[i])
+
+    y=np.asarray(y)
+    X1=np.mean(np.asarray(X1),axis=0)
+    X1=image_standard(X1)
+    X2=np.mean(np.asarray(X2),axis=0)
+    X2=image_standard(X2)
+
+    return X1, X2, y
+
+
+def get_predictions(model):
     basepath = os.path.expanduser(f'{LOCAL_DATA_PATH}{MODE.capitalize()}/{chip_id_folder}')
-    all_chip_ids = os.listdir(basepath)
-    all_chip_ids.sort()
-    chip_ids = []
-    for chip_id in all_chip_ids:
-        if (chip_id in files_not_trained) and (os.path.exists(f'{basepath}/{chip_id}/S1')
-            and os.path.exists(f'{basepath}/{chip_id}/S2')
-            and os.path.exists(f'{basepath}/{chip_id}/GroundTruth')):
-            chip_ids.append (chip_id)
-            if len(chip_ids) == n_chips:
-                break
-    if len(chip_ids) < n_chips:
-        print(Fore.RED + f"\nThere is not enough data to import for {n_chips} chip id's. Run load_dataset to download some files." + Style.RESET_ALL)
-        return None
+    predicts=[] # file with predictions: necessary for API
+    i = 0
 
-    #chip_ids = list_chip_ids[: int(len(list_chip_ids) * PERC)]
-    #filt_features = features_per_month(FEATURES_FILE, MONTH)
-    #filt_features = features_mode(filt_features, MODE)
-    #filt_features = features_downloaded(filt_features)
-    #filt_features = filt_features[filt_features['chip_id'] == chip_ids]
-    #basepath = '../raw_data/Train/Chip_Id/'
+    chip_ids = create_chip_ids_list()
 
-    for x in range(0, n_chips):
-        # Get Xs
-        path = os.path.join(basepath, chip_ids[x])
+    while i <= len(chip_ids):
+        X1 = []
+        X2 = []
+        path = os.path.join(basepath, chip_ids[i])
         path1_1 = os.path.join(path, 'S1')
         path1_2 = os.path.join(path, 'S2')
         files_list = [file for file in os.listdir(path1_1)]
-        files_list.sort()
-        files_f = files_list[-5:]
-        for x in range(0,len(files_f)):
-            path2_1 = os.path.join(path1_1, files_f[x])
-            X1.append(image_to_np(path2_1))
+        for x in range(0,len(files_list)):
+            path2_1 = os.path.join(path1_1, files_list[x])
+            img = tifffile.imread(path2_1)
+            X1.append(img)
         files_list = [file for file in os.listdir(path1_2)]
-        files_list.sort()
-        files_f = files_list[-5:]
-        for x in range(0,len(files_f)):
-            path2_2 = os.path.join(path1_2, files_f[x])
-            X2.append(image_to_np(path2_2))
-
-
-        # Get y
-        #files_list = os.listdir(path1_3)
-        path1_3 = os.path.join(path, 'GroundTruth')
-        for file in os.listdir(path1_3):
-            path3 = os.path.join(path1_3, file)
-            y.append(image_to_np_y(path3))
-
-
-    return np.asarray(X1), np.asarray(X2), np.asarray(y), chip_ids[:n_chips]
-
-def save_predictions(y_pred, chip_ids_list):
-    # Build a function that saves one numpy array into a tif image and stores it in LOCAL_OUTPUT_DATA
-
-    today = datetime.date.today()
-    save_path = LOCAL_OUTPUT_PATH + today
-    check_data_path (save_path)
-    os.chdir(os.path.expanduser(save_path))
-
-    for x, chip_id in enumerate(chip_ids_list):
-        tifffile.imwrite(f'{chip_id}_agbm.tif', y_pred[x], photometric='rgb')
-        print(Fore.GREEN + f'\nSaving prediction file {chip_id}_agbm.tif in folder {save_path}' + Style.RESET_ALL)
-
-
-
-#def get_chunk(source_name: str,
-#              index: int = 0,
-#              chunk_size: int = None,
-#              verbose=False) -> pd.DataFrame:
-#    """
-#    Return a `chunk_size` rows from the source dataset, starting at row `index` (included)
-#    Always assumes `source_name` (CSV or Big Query table) have headers,
-#    and do not consider them as part of the data `index` count.
-#    """
-#
-#    if "processed" in source_name:
-#        columns = None
-#        dtypes = DTYPES_PROCESSED_OPTIMIZED
-#    else:
-#        columns = COLUMN_NAMES_RAW
-#        if os.environ.get("DATA_SOURCE") == "big query":
-#            dtypes = DTYPES_RAW_OPTIMIZED
-#        else:
-#            dtypes = DTYPES_RAW_OPTIMIZED_HEADLESS
-#
-#    if os.environ.get("DATA_SOURCE") == "big query":
-#
-#
-#        chunk_df = get_bq_chunk(table=source_name,
-#                                index=index,
-#                                chunk_size=chunk_size,
-#                                dtypes=dtypes,
-#                                verbose=verbose)
-#
-#        return chunk_df
-#
-#    chunk_df = get_pandas_chunk(path=source_name,
-#                                index=index,
-#                                chunk_size=chunk_size,
-#                                dtypes=dtypes,
-#                                columns=columns,
-#                                verbose=verbose)
-#
-#    return chunk_df
-
-
-#def save_chunk(destination_name: str,
-#               is_first: bool,
-#               data: pd.DataFrame) -> None:
-#    """
-#    save chunk
-#    """
-#
-#    if os.environ.get("DATA_SOURCE") == "big query":
-#
-#
-#         save_bq_chunk(table=destination_name,
-#                      data=data,
-#                      is_first=is_first)
-#
-#        return
-#
-#    save_local_chunk(path=destination_name,
-#                     data=data,
-#                     is_first=is_first)
+        for x in range(0,len(files_list)):
+            path2_2 = os.path.join(path1_2, files_list[x])
+            img = tifffile.imread(path2_2)
+            X2.append(img)
+        X1=np.mean(np.asarray(X1),axis=0)
+        X1=image_standard(X1)
+        X2=np.mean(np.asarray(X2),axis=0)
+        X2=image_standard(X2)
+        print(f"Predicting chip {chip_ids[i]}.")
+        prediction = model.predict([X1, X2])
+        predict = np.asarray(prediction)
+        predicts.append (predict)
+        path=f'{LOCAL_OUTPUT_PATH}/'
+        check_data_path(path)
+        tifffile.imwrite(f'{path}{chip_ids[i]}_agbm.tif', predict.reshape((256,256)))
+        print(f"Done with chip {chip_ids[i]}!")
+        i += 1
+        if i == len(chip_ids):
+            print(f"\n✅ Prediction of {i} chip done: images with shape ", predict.shape)
+            break
+    return predicts, chip_ids
