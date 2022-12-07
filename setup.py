@@ -6,7 +6,7 @@ with open("requirements.txt") as f:
 requirements = [x.strip() for x in content if "git+" not in x]
 
 setup(name='project-biomassters',
-      version="0.0.1",
+      version="1.0.0",
       description="Project BioMassters Model (api_pred)",
       #license="MIT",
       author="Le Wagon group",

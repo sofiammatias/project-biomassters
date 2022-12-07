@@ -3,7 +3,6 @@ streamlit
 ipdb
 ipykernel
 matplotlib
-tensorflow
 numpy
 pandas
 nbresult

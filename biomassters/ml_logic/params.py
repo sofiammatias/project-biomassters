@@ -11,6 +11,7 @@ import pandas as pd
 LOCAL_DATA_PATH = os.path.expanduser(os.getenv('LOCAL_DATA_PATH'))
 LOCAL_OUTPUT_PATH = os.path.expanduser(os.getenv('LOCAL_OUTPUT_PATH'))
 LOCAL_REGISTRY_PATH = os.path.expanduser(os.getenv('LOCAL_REGISTRY_PATH'))
+EPOCHS = int(os.getenv('EPOCHS'))
 
 
 FEATURES_FILE = pd.read_csv (os.path.expanduser(os.getenv('FEATURES')))

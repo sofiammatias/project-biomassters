@@ -18,7 +18,7 @@ from typing import Tuple
 import os
 import tifffile
 import numpy as np
-from biomassters.ml_logic.params import CHIP_ID_PATH
+from biomassters.ml_logic.params import CHIP_ID_PATH, EPOCHS
 #from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, RobustScaler
 
 
@@ -185,7 +185,7 @@ def train_model(model: Model,
 
     print(Fore.BLUE + "\nTrain model..." + Style.RESET_ALL)
     es = EarlyStopping(restore_best_weights = True)
-    history = model.fit([X1,X2], y, verbose = 1, epochs = 10, callbacks = [es])
+    history = model.fit([X1,X2], y, verbose = 1, epochs = EPOCHS, callbacks = [es])
 
     return model, history
 

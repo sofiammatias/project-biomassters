@@ -92,8 +92,10 @@ def load_model(save_copy_locally=False) -> Model:
     """
     load the latest saved model, return None if no model found
     """
+
     if os.environ.get("MODEL_TARGET") == "mlflow":
         stage = "Production"
+        #stage = "None"
 
         print(Fore.BLUE + f"\nLoad model {stage} stage from mlflow..." + Style.RESET_ALL)
 
@@ -104,10 +106,10 @@ def load_model(save_copy_locally=False) -> Model:
 
         model_uri = f"models:/{mlflow_model_name}/{stage}"
         print(f"- uri: {model_uri}")
-
         try:
             model = mlflow.keras.load_model(model_uri=model_uri)
             print("\n✅ model loaded from mlflow")
+
             if save_copy_locally:
                 from pathlib import Path
 

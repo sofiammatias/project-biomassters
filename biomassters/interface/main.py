@@ -117,6 +117,19 @@ def train():
         print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first." + Style.RESET_ALL)
         return None
 
+    model = None
+    model = load_model()  # production model
+
+    # Iterate on the full dataset per chunks
+    metrics_val_list = []
+
+    # Initialize model
+    if model is None:
+        model = initialize_model(32)
+
+    # (Re-)compile and train the model incrementally
+    model = compile_model(model)
+
     chip_ids = create_chip_ids_list()
 
     while i <= len(chip_ids):
@@ -127,19 +140,6 @@ def train():
             print(Fore.RED + "\nData is not ready for processing. Run run_organizing_data function first or download files to continue." + Style.RESET_ALL)
             return None
 
-        if i in range(0, 8000, 1000):
-            model = None
-            model = load_model()  # production model
-
-            # Iterate on the full dataset per chunks
-            metrics_val_list = []
-
-            # Initialize model
-            if model is None:
-                model = initialize_model(32)
-
-            # (Re-)compile and train the model incrementally
-            model = compile_model(model)
 
         print(f"Training on chip {chip_ids[i]}.")
         model, history = train_model(model, X1, X2, y)
