@@ -13,7 +13,7 @@ This project aims at providing biomass estimations to answer the challenge from 
 
 The challenge consists in estimating the biomass of a forest, Finland forest, using satellite imagery. LiDAR 3D models where first used to estimate biomass but these surveys are expensive and time-consuming. Using a LiDAR "image" as a target (each pixel number is actually the biomass estimation for each 10mx10m forest area), our model needs to predict as accurately as possible this same "image" using satellite images as inputs. This will make the biomass estimation much cheaper and faster to obtain.
 
-The challenge can be consulted online in drivendata.org/competitions/99/biomass-estimation/
+The challenge can be consulted online in <a href='https://drivendata.org/competitions/99/biomass-estimation/'>https://drivendata.org/competitions/99/biomass-estimation/</a>
 
 *********************************
 
