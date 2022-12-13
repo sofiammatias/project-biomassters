@@ -1,16 +1,21 @@
-[//]: # ( challenge tech stack: fastapi uvicorn )
+## Objectives
 
-[//]: # ( challenge instructions )
-
-## Objective
-
-1. Use **FastAPI** to create an API for your model
-2. Run that API on your machine
-3. Put it in production
+1. Setup a deep learning model that is able to estimate the biomass in Finland forest from satellite imagery
+2. The model uses a U-NET approach where we use X images to predict a final image 
+3. Apply all knowledge from LeWagon courses including:
+  1. Using **FastAPI** to create an API
+  2. Using a **Docker container** and **Google Cloud Run** to put the API in production
+  3. Creating a website for a demo with the API
 
 ## Context
 
-Now that we have a performant model trained in the cloud, we will expose it to the world 🌍
+This project aims at providing biomass estimations to answer the challenge from the website drivendata.org. The biomass estimation is nothing but a tool used by environmentalists to calculate the amount of carbon captured in a forest (to estimate not only the ability of the forest to capture carbon, but also to know the potential amount of carbon release, for example, if the forest burns). 
+
+The challenge consists in estimating the biomass of a forest, Finland forest, using satellite imagery. LiDAR 3D models where first used to estimate biomass but these surveys are expensive and time-consuming. Using a LiDAR "image" as a target (each pixel number is actually the biomass estimation for each 10mx10m forest area), our model needs to predict as accurately as possible this same "image" using satellite images as inputs. This will make the biomass estimation much cheaper and faster to obtain.
+
+The challenge can be consulted online in drivendata.org/competitions/99/biomass-estimation/
+
+*********************************
 
 We will create a **prediction API** for our model, run it on our machine to make sure that everything works correctly, and then we will deploy it in the cloud so that everyone can play with our model!
 
@@ -45,18 +50,17 @@ A new `taxifare/api` directory has been added to the project to contain the code
 
 ```bash
 .
-├── Dockerfile          # 🎁 NEW: building instructions
-├── MANIFEST.in         # 🎁 NEW: config file for production
+├── Dockerfile          # building instructions
+├── MANIFEST.in         # config file for production
 ├── Makefile            # good old task manager
 ├── README.md
 ├── requirements.txt    # all the dependencies you need to run the package
 ├── setup.py            # package installer
-├── taxifare
-│   ├── api             # 🎁 NEW: API directory
+├── biomassters
+│   ├── api             # API directory
 │   │   ├── __init__.py
-│   │   └── fast.py     # 🎁 NEW: where the API lives
+│   │   └── fast.py     # where the API lives
 │   ├── data_sources    # data stuff
-│   ├── flow            # DAG stuff
 │   ├── interface       # package entry point
 │   └── ml_logic        # ML stuff
 └── tests
