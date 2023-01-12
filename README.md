@@ -5,7 +5,7 @@ This challenge was chosen from the [DrivenData](https://drivendata.co/) website 
 
 The main goal in this challenge was to estimate the yearly biomass (AGBM) of different sections in Finland's forests using imagery from Sentinel-1 and Sentinel-2 satellites. The ground truth for this challenge was derived from airborne LiDAR surveys and in-situ measurements. 
 
-<img alt="Picture" width="800" height="300" src="https://user-images.githubusercontent.com/114782592/211893572-e2628a2d-7dce-439f-be68-057819913ccf.png">
+<img alt="Picture" width="800" height="280" src="https://user-images.githubusercontent.com/114782592/211893572-e2628a2d-7dce-439f-be68-057819913ccf.png">
 
 Aboveground biomass (AGBM) is a widespread measure in the study of carbon release and sequestration by forests. Forests can act as carbon sinks by removing carbon dioxide from the air through photosynthesis, but they can also release carbon dioxide through wildfires, respiration, and decomposition. In order to understand how much carbon a forest contains (its carbon stock) and how it changes (carbon flux), it is important to have an accurate measure of AGBM. In turn, such information allows landowners and policy makers to make better decisions for the conservation of forests.
 
@@ -45,6 +45,9 @@ Besides creating a model to predict our biomass estimamtion "images", we also ha
 ## Results
 
 The primary objective of this project was to fulfill the deliveries for our bootcamp final project: a working model able to predict our output; a live API; a live website; an automated process to deal with the model training/time constraints.
+
+Here is our demo website with our model API:
+https://sofiamatias.site/wp-content/uploads/2023/01/Biomassters_API_website.mp4
 
 The second objective was to submit our predictions for the challenge and get a score/rank to see how we would rank among other/more experienced data scientists (and hopefully get the money prize 😁). 
 
@@ -125,6 +128,6 @@ def initialize_model(start_neurons = 32) -> Model:
 </details>
 
 
-![](https://drivendata-public-assets.s3.amazonaws.com/biomass-finnish-forests.jpg)
+![finnish forest - image from drivendata website](https://drivendata-public-assets.s3.amazonaws.com/biomass-finnish-forests.jpg)
 
 
