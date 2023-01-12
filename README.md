@@ -130,6 +130,6 @@ def initialize_model(start_neurons = 32) -> Model:
 </details>
 
 
-![finnish forest - image from drivendata website](https://drivendata-public-assets.s3.amazonaws.com/biomass-finnish-forests.jpg)
+<img src="https://drivendata-public-assets.s3.amazonaws.com/biomass-finnish-forests.jpg" height="300" width="1000">
 
 
