@@ -54,14 +54,13 @@ https://user-images.githubusercontent.com/114782592/211946494-e1adf6ff-1d8a-4bc5
 
 The second objective was to submit our predictions for the challenge and get a score/rank to see how we would rank among other/more experienced data scientists (and hopefully get the money prize 😁). 
 
-Challenge result: **We managed to rank in #52 among more than 800 participants!!** 
+Drivendata challenge result: **We managed to rank in #52 among more than 800 participants!!** 
 
-This project aims at providing biomass estimations to answer the challenge from the website drivendata.org. The biomass estimation is nothing but a tool used by environmentalists to calculate the amount of carbon captured in a forest (to estimate not only the ability of the forest to capture carbon, but also to know the potential amount of carbon release, for example, if the forest burns). 
+This project/challenge was quite interesting and... well, challenging. Between time (2-week project), hardware contraints (training/test dataset was a "monster" of 300Gb, not easy to handle, and our model needed GPU to train) and our almost non-existent experience, our whole group managed to implement this API online. We were able to submit predictions with better models after we presented our project, granting our ranking among the best 100 models. With was a great team effort!
 
-The challenge consists in estimating the biomass of a forest, Finland forest, using satellite imagery. LiDAR 3D models where first used to estimate biomass but these surveys are expensive and time-consuming. Using a LiDAR "image" as a target (each pixel number is actually the biomass estimation for each 10mx10m forest area), our model needs to predict as accurately as possible this same "image" using satellite images as inputs. This will make the biomass estimation much cheaper and faster to obtain.
+You can find [here](https://github.com/sofiammatias/project-biomassters/files/10397085/BioMassters.1.pdf) our project presentation slides.
 
 ## Our model
-*********************************
 
 <details>
   <summary markdown='span'> See model code</summary>
