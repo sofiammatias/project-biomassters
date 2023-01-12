@@ -47,7 +47,8 @@ Besides creating a model to predict our biomass estimamtion "images", we also ha
 The primary objective of this project was to fulfill the deliveries for our bootcamp final project: a working model able to predict our output; a live API; a live website; an automated process to deal with the model training/time constraints.
 
 Here is our demo website with our model API:
-https://sofiamatias.site/wp-content/uploads/2023/01/Biomassters_API_website.mp4
+https://user-images.githubusercontent.com/114782592/211946494-e1adf6ff-1d8a-4bc5-9cfd-9ae32563202f.mp4
+
 
 The second objective was to submit our predictions for the challenge and get a score/rank to see how we would rank among other/more experienced data scientists (and hopefully get the money prize 😁). 
 
