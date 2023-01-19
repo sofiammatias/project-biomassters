@@ -62,6 +62,24 @@ You can find [here](https://github.com/sofiammatias/project-biomassters/files/10
 
 ## Our model
 
+Our model consists in convolutional neural networks already designed for image recognition: [Unet](https://paperswithcode.com/method/u-net).
+With over **8 million parameters**, our model has been perfected to analyse satellite forest images from both sattelites, with over 10 hours of
+training.
+
+Input data consists in images from both satellite S1 (4 images) and S2 (11 images from different spectrum frequencies). There is one image per month available, however, some are not usable due to cloud coverage. The model was able to predict good results when using images from both S1 and S2, while selecting images from any of these sattelites (for example, only images 3 and 4 from S1 and images 4 and 6 for S2) proved to give worse results - or really bad results.
+
+<img width="351" alt="image" src="https://user-images.githubusercontent.com/114782592/213487788-76aa601d-4550-404c-a8c2-6fb72b717933.png">
+
+This is an example of an "image" prediction when using just a couple of images from S2. The model used a sort of "mean value" to arrange all pixels and all of them have a similar value.
+
+As mentioned above, the performance of our model is measured by the **average root mean squared error**
+
+$$Average RMSE = \frac {\sum_{i=0}^M \sqrt{\frac{1}{N} \sum_{i=0}^N (y_i - \hat{y_i})^2 }}{M}$$
+
+Our best results were obtained with a RMSE = 42 score for the model. See below an example of a predicted image vs a ground truth image from this model:
+
+<img width="667" alt="image" src="https://user-images.githubusercontent.com/114782592/213485750-f10b2a2d-8e62-4103-ba12-376a163bd172.png">
+
 <details>
   <summary markdown='span'> See model code</summary>
 
