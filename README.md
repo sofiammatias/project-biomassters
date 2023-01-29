@@ -54,7 +54,7 @@ https://user-images.githubusercontent.com/114782592/211946494-e1adf6ff-1d8a-4bc5
 
 The second objective was to submit our predictions for the challenge and get a score/rank to see how we would rank among other/more experienced data scientists (and hopefully get the money prize 😁). 
 
-Drivendata challenge result: **We managed to rank in the first 70 places (#60) among more than 900 participants!!** Not bad for a team of rookies! 
+Drivendata challenge result: **We managed to rank in the [leaderboard](https://www.drivendata.org/competitions/99/biomass-estimation/leaderboard/?page=2) in #61 place among more than 900 participants!!** Not bad for a team of rookies!
 
 This project/challenge was quite interesting and... well, challenging. Between time (2-week project), hardware contraints (training/test dataset was a "monster" of 300Gb, not easy to handle, and our model needed GPU to train) and our almost non-existent experience, our whole group managed to implement this API online. We were able to submit predictions with better models after we presented our project, granting our ranking among the best 100 models. With was a great team effort!
 
