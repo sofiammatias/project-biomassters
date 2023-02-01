@@ -46,8 +46,9 @@ Besides creating a model to predict our biomass estimamtion "images", we also ha
 
 The primary objective of this project was to fulfill the deliveries for our bootcamp final project: a working model able to predict our output; a live API; a live website; an automated process to deal with the model training/time constraints.
 
-Here is our demo website with our deep learning model API:
+To see our demo website with our deep learning model API live, follow [this link](https://sofiammatias-biomassters-website-app-zfuyub.streamlit.app/).
 
+Here is a video of a local version:
 
 https://user-images.githubusercontent.com/114782592/211946494-e1adf6ff-1d8a-4bc5-9cfd-9ae32563202f.mp4
 
